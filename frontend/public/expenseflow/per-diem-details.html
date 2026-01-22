@@ -1,0 +1,1042 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cash and Other Expenses: Details for Line 1</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user="TMCHAN" data-api-base="/api" class="per-diem-details">
+  <div data-component="topbar"></div>
+
+  <div class="content">
+    <div data-component="wizard" data-step="2"></div>
+
+    <div class="page-title-row">
+      <div class="page-title" id="per-diem-title">Cash and Other Expenses: Details for Line 1</div>
+      <div class="details-actions">
+        <button class="btn" id="new-btn" type="button">New</button>
+        <button class="btn" id="remove-btn" type="button">Remove</button>
+        <button class="btn" id="line-back" type="button">Back</button>
+        <span id="line-indicator" class="line-indicator">Line 1 of 1</span>
+        <button class="btn" id="line-next" type="button">Next</button>
+        <button class="btn" id="return-btn" type="button">Return</button>
+      </div>
+    </div>
+
+    <div class="required-note">* Indicates required field</div>
+
+    <div class="details-grid">
+      <div>
+        <div class="details-row">
+          <span class="req">*</span>
+          <label>Expense Type</label>
+          <select class="input" id="per-diem-expense-type" data-options="per-diem-expense-types"></select>
+        </div>
+        <div class="details-row is-hidden" data-per-diem-extra>
+          <span class="req">*</span>
+          <label>Start Date</label>
+          <div class="date-cell">
+            <input class="input date-input" id="per-diem-start-date" />
+            <button class="calendar-btn" type="button" aria-label="Pick date"></button>
+          </div>
+        </div>
+        <div class="details-row is-hidden" data-per-diem-extra>
+          <span class="req"></span>
+          <label>End Date</label>
+          <div class="date-cell">
+            <input class="input date-input" id="per-diem-end-date" />
+            <button class="calendar-btn" type="button" aria-label="Pick date"></button>
+          </div>
+        </div>
+        <div class="details-row is-hidden" data-per-diem-extra>
+          <span class="req">*</span>
+          <label>Number of Nights</label>
+          <input class="input-sm" id="per-diem-nights" />
+        </div>
+        <div class="details-row is-hidden" data-per-diem-extra>
+          <span class="req"></span>
+          <label>Reimbursable Amount</label>
+          <input class="input-sm" id="per-diem-reimb-amount" />
+        </div>
+        <div class="details-row per-diem-action">
+          <span class="req"></span>
+          <button class="mini-btn" id="per-diem-generate" type="button">Generate Per Diem</button>
+        </div>
+      </div>
+
+      <div class="details-right">
+        <div class="details-row top-align">
+          <span class="req"></span>
+          <label>Description</label>
+          <textarea class="textarea" id="per-diem-description"></textarea>
+        </div>
+        <div class="details-row is-hidden" data-per-diem-extra>
+          <span class="req">*</span>
+          <label>Destination</label>
+          <div class="input-group">
+            <input class="input" id="per-diem-destination" readonly="readonly" />
+            <button class="input-icon input-icon-btn" id="per-diem-destination-search" type="button" aria-label="Search destination">
+              <svg class="icon-search" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section per-diem-calc is-hidden" id="per-diem-summary-section">
+      <div class="panel-subtitle">Per Diem Calculation</div>
+      <div class="per-diem-summary">
+        <div class="per-diem-summary-title">Reimbursement Summary</div>
+        <div class="per-diem-summary-table-wrap">
+          <table class="per-diem-summary-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Date</th>
+                <th class="align-right">Per Diem Amount (HKD)</th>
+                <th class="align-right">Per Diem Amount (<span id="per-diem-summary-currency">USD</span>)</th>
+                <th class="align-right">Reimbursable Amount (HKD)</th>
+              </tr>
+            </thead>
+            <tbody id="per-diem-summary-body"></tbody>
+            <tfoot>
+              <tr>
+                <td class="align-right total-label">Total</td>
+                <td class="align-right" id="per-diem-total-hkd"></td>
+                <td class="align-right" id="per-diem-total-local"></td>
+                <td class="align-right" id="per-diem-total-reimb"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="details-section">
+      <div class="panel-subtitle">Additional Information</div>
+      <div class="details-alert">
+        <span class="details-alert-icon">!</span>
+        <span>Please note: If this overseas travel involves conference attendance, all submitted reimbursement items must be recorded under a Conference expense type; otherwise, they must be recorded under a Travel expense type.</span>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+
+  <div class="modal-backdrop" id="date-modal">
+    <div class="modal-card">
+      <div class="modal-header">Pick a Date</div>
+      <div class="modal-controls">
+        <button class="mini-btn" type="button" id="month-prev">&#x2039;</button>
+        <select id="month-select"></select>
+        <select id="year-select"></select>
+        <button class="mini-btn" type="button" id="month-next">&#x203A;</button>
+      </div>
+      <table class="calendar-grid">
+        <thead>
+          <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+          </tr>
+        </thead>
+        <tbody id="calendar-body"></tbody>
+      </table>
+      <div class="modal-footer">
+        <button class="mini-btn" type="button" id="date-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="destination-modal">
+    <div class="modal-card destination-modal-card" role="dialog" aria-modal="true" aria-labelledby="destination-modal-title">
+      <div class="destination-modal-header">
+        <div class="destination-modal-title" id="destination-modal-title">Search and Select: Destination</div>
+        <div class="destination-modal-actions">
+          <button class="btn" type="button" id="destination-cancel">Cancel</button>
+          <button class="btn" type="button" id="destination-select" disabled="disabled">Select</button>
+        </div>
+      </div>
+      <div class="destination-modal-body">
+        <div class="destination-section">
+          <div class="destination-section-title">Search</div>
+          <div class="destination-help">
+            To find your item, select a filter item in the pulldown list and enter a value in the text field, then select the "Go" button.
+          </div>
+          <div class="destination-search-row">
+            <label for="destination-search-by">Search By</label>
+            <select class="input" id="destination-search-by">
+              <option value="location">Location Name</option>
+              <option value="country">Country/Region</option>
+              <option value="combined">Country/Region - City</option>
+            </select>
+            <input class="input" id="destination-search" aria-label="Search text" />
+            <button class="mini-btn" type="button" id="destination-go">Go</button>
+          </div>
+        </div>
+
+        <div class="destination-section">
+          <div class="destination-section-title">Results</div>
+          <div class="destination-status" id="destination-status"></div>
+          <div class="destination-results-scroll">
+            <table class="destination-results-table">
+              <thead>
+                <tr>
+                  <th style="width: 32px;"></th>
+                  <th style="width: 110px;">Quick Select</th>
+                  <th>Location Name <span class="destination-sort is-asc" aria-hidden="true"></span></th>
+                  <th style="width: 160px;">Country/Region <span class="destination-sort" aria-hidden="true"></span></th>
+                  <th style="width: 220px;">Description</th>
+                </tr>
+              </thead>
+              <tbody id="destination-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-component="footer"></div>
+
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      var app = window.ExpenseApp;
+      var storage = app ? app.storage : null;
+      var titleEl = document.getElementById("per-diem-title");
+      var returnBtn = document.getElementById("return-btn");
+      var lineBack = document.getElementById("line-back");
+      var lineNext = document.getElementById("line-next");
+      var lineIndicator = document.getElementById("line-indicator");
+      var removeBtn = document.getElementById("remove-btn");
+      var newBtn = document.getElementById("new-btn");
+      var expenseType = document.getElementById("per-diem-expense-type");
+      var startDate = document.getElementById("per-diem-start-date");
+      var endDate = document.getElementById("per-diem-end-date");
+      var nights = document.getElementById("per-diem-nights");
+      var reimbAmount = document.getElementById("per-diem-reimb-amount");
+      var description = document.getElementById("per-diem-description");
+      var destination = document.getElementById("per-diem-destination");
+      var destinationSearchBtn = document.getElementById("per-diem-destination-search");
+      var generateBtn = document.getElementById("per-diem-generate");
+      var destinationModal = document.getElementById("destination-modal");
+      var destinationSearchBy = document.getElementById("destination-search-by");
+      var destinationSearchInput = document.getElementById("destination-search");
+      var destinationResultsBody = document.getElementById("destination-results-body");
+      var destinationStatus = document.getElementById("destination-status");
+      var destinationCancel = document.getElementById("destination-cancel");
+      var destinationSelect = document.getElementById("destination-select");
+      var destinationGo = document.getElementById("destination-go");
+      var summarySection = document.getElementById("per-diem-summary-section");
+      var summaryBody = document.getElementById("per-diem-summary-body");
+      var summaryCurrency = document.getElementById("per-diem-summary-currency");
+      var totalHkdCell = document.getElementById("per-diem-total-hkd");
+      var totalLocalCell = document.getElementById("per-diem-total-local");
+      var totalReimbCell = document.getElementById("per-diem-total-reimb");
+      var extraRows = Array.prototype.slice.call(
+        document.querySelectorAll("[data-per-diem-extra]")
+      );
+
+      var lineNumber = 1;
+      var defaults = {
+        expenseType: "",
+        startDate: "",
+        endDate: "",
+        destination: "",
+        description: "",
+        nights: "",
+        reimbAmount: ""
+      };
+      var destinationOptions = [
+        { country: "Australia", city: "Brisbane", description: "Coastal city" },
+        { country: "Australia", city: "Melbourne", description: "Cultural hub" },
+        { country: "Australia", city: "Perth", description: "Western capital" },
+        { country: "Australia", city: "Sydney", description: "Major city" },
+        { country: "Austria", city: "Vienna", description: "Capital city" },
+        { country: "Belgium", city: "Brussels", description: "Capital city" },
+        { country: "Brazil", city: "Rio de Janeiro", description: "Coastal city" },
+        { country: "Brazil", city: "Sao Paulo", description: "Financial hub" },
+        { country: "Canada", city: "Montreal", description: "Major city" },
+        { country: "Canada", city: "Toronto", description: "Major city" },
+        { country: "Canada", city: "Vancouver", description: "Coastal city" },
+        { country: "China", city: "Beijing", description: "Capital city" },
+        { country: "China", city: "Guangzhou", description: "Major city" },
+        { country: "China", city: "Hong Kong", description: "Financial hub" },
+        { country: "China", city: "Shanghai", description: "Major city" },
+        { country: "China", city: "Shenzhen", description: "Tech hub" },
+        { country: "Czech Republic", city: "Prague", description: "Capital city" },
+        { country: "Denmark", city: "Copenhagen", description: "Capital city" },
+        { country: "Egypt", city: "Cairo", description: "Capital city" },
+        { country: "France", city: "Lyon", description: "Major city" },
+        { country: "France", city: "Paris", description: "Capital city" },
+        { country: "Germany", city: "Berlin", description: "Capital city" },
+        { country: "Germany", city: "Frankfurt", description: "Financial hub" },
+        { country: "Germany", city: "Munich", description: "Major city" },
+        { country: "Greece", city: "Athens", description: "Capital city" },
+        { country: "India", city: "Bangalore", description: "Tech hub" },
+        { country: "India", city: "Delhi", description: "Capital region" },
+        { country: "India", city: "Mumbai", description: "Financial hub" },
+        { country: "Indonesia", city: "Jakarta", description: "Capital city" },
+        { country: "Ireland", city: "Dublin", description: "Capital city" },
+        { country: "Italy", city: "Milan", description: "Financial hub" },
+        { country: "Italy", city: "Rome", description: "Capital city" },
+        { country: "Japan", city: "Kyoto", description: "Historic city" },
+        { country: "Japan", city: "Osaka", description: "Major city" },
+        { country: "Japan", city: "Tokyo", description: "Capital city" },
+        { country: "Malaysia", city: "Kuala Lumpur", description: "Capital city" },
+        { country: "Netherlands", city: "Amsterdam", description: "Capital city" },
+        { country: "New Zealand", city: "Auckland", description: "Major city" },
+        { country: "Norway", city: "Oslo", description: "Capital city" },
+        { country: "Philippines", city: "Manila", description: "Capital city" },
+        { country: "Poland", city: "Warsaw", description: "Capital city" },
+        { country: "Portugal", city: "Lisbon", description: "Capital city" },
+        { country: "Qatar", city: "Doha", description: "Capital city" },
+        { country: "Russia", city: "Moscow", description: "Capital city" },
+        { country: "Saudi Arabia", city: "Riyadh", description: "Capital city" },
+        { country: "Singapore", city: "Singapore", description: "City state" },
+        { country: "South Africa", city: "Cape Town", description: "Coastal city" },
+        { country: "South Africa", city: "Johannesburg", description: "Major city" },
+        { country: "South Korea", city: "Busan", description: "Coastal city" },
+        { country: "South Korea", city: "Seoul", description: "Capital city" },
+        { country: "Spain", city: "Barcelona", description: "Coastal city" },
+        { country: "Spain", city: "Madrid", description: "Capital city" },
+        { country: "Sweden", city: "Stockholm", description: "Capital city" },
+        { country: "Switzerland", city: "Geneva", description: "International city" },
+        { country: "Switzerland", city: "Zurich", description: "Financial hub" },
+        { country: "Taiwan", city: "Taipei", description: "Capital city" },
+        { country: "Thailand", city: "Bangkok", description: "Capital city" },
+        { country: "Turkey", city: "Istanbul", description: "Major city" },
+        { country: "United Arab Emirates", city: "Abu Dhabi", description: "Capital city" },
+        { country: "United Arab Emirates", city: "Dubai", description: "Major city" },
+        { country: "United Kingdom", city: "Edinburgh", description: "Capital city" },
+        { country: "United Kingdom", city: "London", description: "Capital city" },
+        { country: "United Kingdom", city: "Manchester", description: "Major city" },
+        { country: "United States", city: "Boston", description: "Major city" },
+        { country: "United States", city: "Chicago", description: "Major city" },
+        { country: "United States", city: "Houston", description: "Major city" },
+        { country: "United States", city: "Los Angeles", description: "Major city" },
+        { country: "United States", city: "Miami", description: "Coastal city" },
+        { country: "United States", city: "Menlo Park", description: "Major city" },
+        { country: "United States", city: "New York", description: "Major city" },
+        { country: "United States", city: "San Diego", description: "Coastal city" },
+        { country: "United States", city: "San Francisco", description: "Tech hub" },
+        { country: "United States", city: "Seattle", description: "Tech hub" },
+        { country: "United States", city: "Washington DC", description: "Capital city" },
+        { country: "Vietnam", city: "Hanoi", description: "Capital city" },
+        { country: "Vietnam", city: "Ho Chi Minh City", description: "Major city" }
+      ];
+      var perDiemData = app && app.perDiem ? app.perDiem : null;
+      var perDiemFallback = { currency: "HKD", amount: 900, rate: 1 };
+      var perDiemGenerated = false;
+      var perDiemDraftKey = "perDiemLinesDraft";
+      var dirtyFlagKey = "cashExpensesDirty";
+
+      function getTargetLine() {
+        if (storage && storage.getPerDiemTargetLine) {
+          return storage.getPerDiemTargetLine();
+        }
+        var stored = localStorage.getItem("perDiemTargetLine");
+        var parsed = parseInt(stored, 10);
+        if (!parsed || parsed < 1) {
+          return 1;
+        }
+        return parsed;
+      }
+
+      function readJSON(key, fallback) {
+        try {
+          var raw = localStorage.getItem(key);
+          if (!raw) {
+            return fallback;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function markDirty() {
+        localStorage.setItem(dirtyFlagKey, "true");
+      }
+
+      function getStoredLines() {
+        var raw = localStorage.getItem(perDiemDraftKey);
+        if (!raw) {
+          if (storage && storage.getPerDiemLines) {
+            return storage.getPerDiemLines();
+          }
+          return {};
+        }
+        return readJSON(perDiemDraftKey, {});
+      }
+
+      function storeLines(lines, markDirtyFlag) {
+        localStorage.setItem(perDiemDraftKey, JSON.stringify(lines || {}));
+        if (markDirtyFlag !== false) {
+          markDirty();
+        }
+      }
+
+      function lineHasData(lineData) {
+        if (!lineData) {
+          return false;
+        }
+        return Boolean(
+          lineData.expenseType ||
+            lineData.startDate ||
+            lineData.endDate ||
+            lineData.destination ||
+            lineData.description ||
+            lineData.nights ||
+            lineData.reimbAmount
+        );
+      }
+
+      function getNonEmptyLines() {
+        var lines = getStoredLines();
+        return Object.keys(lines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && lineHasData(lines[String(key)]);
+          })
+          .sort(function (a, b) {
+            return a - b;
+          });
+      }
+
+      function updateLineNav() {
+        var list = getNonEmptyLines();
+        var current = parseInt(lineNumber, 10);
+        var index = list.indexOf(current);
+
+        if (index === -1 || list.length === 0) {
+          lineBack.style.display = "none";
+          lineNext.style.display = "none";
+          lineIndicator.textContent = "";
+          return;
+        }
+
+        lineBack.style.display = index === 0 ? "none" : "inline-block";
+        lineNext.style.display = index === list.length - 1 ? "none" : "inline-block";
+        lineIndicator.textContent = "Line " + (index + 1) + " of " + list.length;
+      }
+
+      function setTitle(lineNumber) {
+        var text = "Cash and Other Expenses: Details for Line " + lineNumber;
+        if (titleEl) {
+          titleEl.textContent = text;
+        }
+        document.title = text;
+      }
+
+      function togglePerDiemFields() {
+        var value = expenseType ? expenseType.value : "";
+        var showDetails =
+          value === "Travelling - Subsistence Allowance" ||
+          value === "Conference - Subsistence Allowance";
+        extraRows.forEach(function (row) {
+          row.classList.toggle("is-hidden", !showDetails);
+        });
+      }
+
+      function getPerDiemConfig(destinationValue) {
+        if (perDiemData && perDiemData.resolve) {
+          return perDiemData.resolve(destinationValue);
+        }
+        return perDiemFallback;
+      }
+
+      function formatAmount(value) {
+        return Number.isFinite(value) ? value.toFixed(2) : "";
+      }
+
+      function markPerDiemDirty() {
+        perDiemGenerated = false;
+        if (summarySection) {
+          summarySection.classList.add("is-hidden");
+        }
+      }
+
+      function parseDateInput(value) {
+        var match = String(value || "").match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+        if (!match) {
+          return null;
+        }
+        var day = parseInt(match[1], 10);
+        var monthText = match[2];
+        var year = parseInt(match[3], 10);
+        var months = {
+          Jan: 0,
+          Feb: 1,
+          Mar: 2,
+          Apr: 3,
+          May: 4,
+          Jun: 5,
+          Jul: 6,
+          Aug: 7,
+          Sep: 8,
+          Oct: 9,
+          Nov: 10,
+          Dec: 11
+        };
+        var monthIndex = months[monthText];
+        if (!Number.isFinite(day) || !Number.isFinite(year) || monthIndex === undefined) {
+          return null;
+        }
+        var date = new Date(year, monthIndex, day);
+        if (Number.isNaN(date.getTime())) {
+          return null;
+        }
+        return date;
+      }
+
+      function formatDateOutput(date) {
+        var monthAbbr = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        var day = date.getDate();
+        var month = monthAbbr[date.getMonth()];
+        var year = date.getFullYear();
+        var dayText = day < 10 ? "0" + day : String(day);
+        return dayText + "-" + month + "-" + year;
+      }
+
+      function renderPerDiemSummary(config, nightsCount) {
+        if (!summaryBody) {
+          return;
+        }
+        summaryBody.innerHTML = "";
+        if (summaryCurrency) {
+          summaryCurrency.textContent = config.currency;
+        }
+
+        var start = parseDateInput(startDate ? startDate.value : "");
+        var totalLocal = 0;
+        var totalHkd = 0;
+
+        for (var i = 0; i < nightsCount; i += 1) {
+          var row = document.createElement("tr");
+          var localAmount = config.amount;
+          var hkdAmount = config.amount * config.rate;
+          var dateText = start
+            ? formatDateOutput(new Date(start.getFullYear(), start.getMonth(), start.getDate() + i))
+            : "Day " + (i + 1);
+
+          totalLocal += localAmount;
+          totalHkd += hkdAmount;
+
+          row.innerHTML =
+            "<td>" + dateText + "</td>" +
+            "<td class=\"align-right\">" + formatAmount(hkdAmount) + "</td>" +
+            "<td class=\"align-right\">" + formatAmount(localAmount) + "</td>" +
+            "<td class=\"align-right\">" + formatAmount(hkdAmount) + "</td>";
+          summaryBody.appendChild(row);
+        }
+
+        if (totalLocalCell) {
+          totalLocalCell.textContent = formatAmount(totalLocal);
+        }
+        if (totalHkdCell) {
+          totalHkdCell.textContent = formatAmount(totalHkd);
+        }
+        if (totalReimbCell) {
+          totalReimbCell.textContent = formatAmount(totalHkd);
+        }
+        if (reimbAmount) {
+          reimbAmount.value = formatAmount(totalHkd);
+        }
+        if (summarySection) {
+          summarySection.classList.remove("is-hidden");
+        }
+        perDiemGenerated = true;
+      }
+
+      var selectedDestination = null;
+
+      function destinationLabel(item) {
+        return item.country + " - " + item.city;
+      }
+
+      function matchesDestination(item, query, mode) {
+        var normalized = String(query || "").toLowerCase();
+        if (!normalized) {
+          return true;
+        }
+        var combined = destinationLabel(item).toLowerCase();
+        if (mode === "country") {
+          return item.country.toLowerCase().indexOf(normalized) > -1 || combined.indexOf(normalized) > -1;
+        }
+        if (mode === "combined") {
+          return combined.indexOf(normalized) > -1;
+        }
+        return item.city.toLowerCase().indexOf(normalized) > -1 || combined.indexOf(normalized) > -1;
+      }
+
+      function setDestinationSelection(item, row, radio) {
+        selectedDestination = item;
+        if (destinationResultsBody) {
+          destinationResultsBody.querySelectorAll(".destination-row").forEach(function (target) {
+            target.classList.remove("is-selected");
+          });
+        }
+        row.classList.add("is-selected");
+        if (radio) {
+          radio.checked = true;
+        }
+        if (destinationSelect) {
+          destinationSelect.disabled = false;
+        }
+      }
+
+      function renderDestinationResults(items, selectedLabel) {
+        if (!destinationResultsBody) {
+          return;
+        }
+        destinationResultsBody.innerHTML = "";
+        selectedDestination = null;
+        if (destinationSelect) {
+          destinationSelect.disabled = true;
+        }
+
+        if (!items.length) {
+          if (destinationStatus) {
+            destinationStatus.textContent = "No items were found matching your request.";
+          }
+          var emptyRow = document.createElement("tr");
+          emptyRow.className = "destination-row";
+          var emptySelect = document.createElement("td");
+          emptySelect.className = "destination-select-cell";
+          emptySelect.textContent = "";
+          var emptyQuick = document.createElement("td");
+          emptyQuick.className = "quick-select";
+          emptyQuick.textContent = "";
+          var emptyLocation = document.createElement("td");
+          emptyLocation.textContent = "No Items found";
+          var emptyCountry = document.createElement("td");
+          emptyCountry.textContent = "";
+          var emptyDescription = document.createElement("td");
+          emptyDescription.textContent = "";
+          emptyRow.appendChild(emptySelect);
+          emptyRow.appendChild(emptyQuick);
+          emptyRow.appendChild(emptyLocation);
+          emptyRow.appendChild(emptyCountry);
+          emptyRow.appendChild(emptyDescription);
+          destinationResultsBody.appendChild(emptyRow);
+          return;
+        }
+
+        if (destinationStatus) {
+          destinationStatus.textContent = "";
+        }
+
+        items.forEach(function (item, index) {
+          var label = destinationLabel(item);
+          var row = document.createElement("tr");
+          row.className = "destination-row";
+          row.setAttribute("data-label", label);
+
+          var selectCell = document.createElement("td");
+          selectCell.className = "destination-select-cell";
+          var radio = document.createElement("input");
+          radio.type = "radio";
+          radio.name = "destination-choice";
+          radio.value = label;
+          radio.addEventListener("change", function () {
+            setDestinationSelection(item, row, radio);
+          });
+          selectCell.appendChild(radio);
+
+          var quickCell = document.createElement("td");
+          quickCell.className = "quick-select";
+          var quickIcon = document.createElement("span");
+          quickIcon.className = "quick-select-icon";
+          quickIcon.setAttribute("aria-hidden", "true");
+          quickCell.appendChild(quickIcon);
+
+          var locationCell = document.createElement("td");
+          locationCell.textContent = label;
+
+          var countryCell = document.createElement("td");
+          countryCell.textContent = item.country;
+
+          var descriptionCell = document.createElement("td");
+          descriptionCell.textContent = label;
+          if (item.description) {
+            descriptionCell.setAttribute("title", item.description);
+          }
+
+          row.appendChild(selectCell);
+          row.appendChild(quickCell);
+          row.appendChild(locationCell);
+          row.appendChild(countryCell);
+          row.appendChild(descriptionCell);
+
+          row.addEventListener("click", function (event) {
+            if (event.target !== radio) {
+              radio.checked = true;
+            }
+            setDestinationSelection(item, row, radio);
+          });
+
+          if (selectedLabel && label === selectedLabel) {
+            setDestinationSelection(item, row, radio);
+          }
+
+          destinationResultsBody.appendChild(row);
+        });
+      }
+
+      function runDestinationSearch() {
+        var mode = destinationSearchBy ? destinationSearchBy.value : "location";
+        var query = destinationSearchInput ? destinationSearchInput.value : "";
+        var selectedLabel = destination ? destination.value : "";
+        var results = destinationOptions.filter(function (item) {
+          return matchesDestination(item, query, mode);
+        });
+        results.sort(function (a, b) {
+          return destinationLabel(a).localeCompare(destinationLabel(b));
+        });
+        renderDestinationResults(results, selectedLabel);
+      }
+
+      function openDestinationModal() {
+        if (!destinationModal) {
+          return;
+        }
+        if (destinationSearchInput) {
+          destinationSearchInput.value = "";
+        }
+        if (destinationSearchBy) {
+          destinationSearchBy.value = "location";
+        }
+        runDestinationSearch();
+        destinationModal.classList.add("open");
+        if (destinationSearchInput) {
+          destinationSearchInput.focus();
+        }
+      }
+
+      function closeDestinationModal() {
+        if (destinationModal) {
+          destinationModal.classList.remove("open");
+        }
+      }
+
+      function applyLineData(lineNumber) {
+        var lines = getStoredLines();
+        var data = lines[String(lineNumber)];
+        if (expenseType) {
+          expenseType.value = defaults.expenseType;
+        }
+        if (startDate) {
+          startDate.value = defaults.startDate;
+        }
+        if (endDate) {
+          endDate.value = defaults.endDate;
+        }
+        if (destination) {
+          destination.value = defaults.destination;
+        }
+        if (description) {
+          description.value = defaults.description;
+        }
+        if (nights) {
+          nights.value = defaults.nights;
+        }
+        if (reimbAmount) {
+          reimbAmount.value = defaults.reimbAmount;
+        }
+
+        if (!data) {
+          togglePerDiemFields();
+          perDiemGenerated = false;
+          if (summarySection) {
+            summarySection.classList.add("is-hidden");
+          }
+          return;
+        }
+
+        if (expenseType) {
+          expenseType.value = data.expenseType || defaults.expenseType;
+        }
+        if (startDate) {
+          startDate.value = data.startDate || defaults.startDate;
+        }
+        if (endDate) {
+          endDate.value = data.endDate || defaults.endDate;
+        }
+        if (destination) {
+          destination.value = data.destination || defaults.destination;
+        }
+        if (description) {
+          description.value = data.description || defaults.description;
+        }
+        if (nights) {
+          nights.value = data.nights || defaults.nights;
+        }
+        if (reimbAmount) {
+          reimbAmount.value = data.reimbAmount || defaults.reimbAmount;
+        }
+        togglePerDiemFields();
+        perDiemGenerated = Boolean(
+          reimbAmount && reimbAmount.value && reimbAmount.value.trim()
+        );
+        if (summarySection) {
+          summarySection.classList.add("is-hidden");
+        }
+      }
+
+      function setLine(targetLine) {
+        var numericLine = parseInt(targetLine, 10);
+        if (!numericLine || numericLine < 1) {
+          numericLine = 1;
+        }
+        lineNumber = numericLine;
+        if (storage && storage.setPerDiemTargetLine) {
+          storage.setPerDiemTargetLine(numericLine);
+        } else {
+          localStorage.setItem("perDiemTargetLine", String(numericLine));
+        }
+        setTitle(numericLine);
+        applyLineData(numericLine);
+        updateActionState();
+        updateLineNav();
+        return numericLine;
+      }
+
+      function hasValue(input) {
+        return Boolean(input && input.value && input.value.trim());
+      }
+
+      function isFormValid() {
+        if (!hasValue(expenseType)) {
+          return false;
+        }
+        return hasValue(startDate) && hasValue(nights) && hasValue(destination);
+      }
+
+      function updateActionState() {
+        var enabled = isFormValid();
+        returnBtn.disabled = false;
+        newBtn.disabled = !enabled;
+        if (generateBtn) {
+          generateBtn.disabled = !enabled;
+        }
+      }
+
+      function saveCurrentLine(lineNumberValue) {
+        var lines = getStoredLines();
+        var data = {
+          expenseType: expenseType ? expenseType.value : "",
+          startDate: startDate ? startDate.value : "",
+          endDate: endDate ? endDate.value : "",
+          destination: destination ? destination.value : "",
+          description: description ? description.value : "",
+          nights: nights ? nights.value : "",
+          reimbAmount: reimbAmount ? reimbAmount.value : ""
+        };
+
+        if (lineHasData(data)) {
+          lines[String(lineNumberValue)] = data;
+        } else {
+          delete lines[String(lineNumberValue)];
+        }
+        storeLines(lines);
+      }
+
+      function findNextEmptyLine(start) {
+        var lines = getStoredLines();
+        for (var i = start; i <= 5; i += 1) {
+          if (!lines[String(i)]) {
+            return i;
+          }
+        }
+        return null;
+      }
+
+      if (app && app.ui && app.ui.populateSelects) {
+        app.ui.populateSelects();
+      }
+
+      if (app && app.datePicker) {
+        app.datePicker.init({
+          onSelect: function () {
+            markPerDiemDirty();
+            updateActionState();
+          }
+        });
+      }
+
+      if (expenseType) {
+        expenseType.addEventListener("change", function () {
+          togglePerDiemFields();
+          markPerDiemDirty();
+          updateActionState();
+        });
+      }
+
+      if (destinationSearchBtn) {
+        destinationSearchBtn.addEventListener("click", openDestinationModal);
+      }
+
+      if (destination) {
+        destination.addEventListener("click", openDestinationModal);
+        destination.addEventListener("keydown", function (event) {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openDestinationModal();
+          }
+        });
+      }
+
+      if (destinationSearchInput) {
+        destinationSearchInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            runDestinationSearch();
+          }
+          if (event.key === "Escape") {
+            closeDestinationModal();
+          }
+        });
+      }
+
+      if (destinationCancel) {
+        destinationCancel.addEventListener("click", closeDestinationModal);
+      }
+
+      if (destinationSelect) {
+        destinationSelect.addEventListener("click", function () {
+          if (!selectedDestination || !destination) {
+            return;
+          }
+          destination.value = destinationLabel(selectedDestination);
+          closeDestinationModal();
+          markPerDiemDirty();
+          updateActionState();
+        });
+      }
+
+      if (destinationGo) {
+        destinationGo.addEventListener("click", runDestinationSearch);
+      }
+
+      if (destinationSearchBy) {
+        destinationSearchBy.addEventListener("change", runDestinationSearch);
+      }
+
+      if (generateBtn) {
+        generateBtn.addEventListener("click", function () {
+          if (!isFormValid()) {
+            window.alert("Please complete all required fields before generating per diem.");
+            return;
+          }
+          var count = parseInt(nights ? nights.value : "0", 10);
+          if (!Number.isFinite(count) || count < 1) {
+            window.alert("Please enter a valid number of nights.");
+            return;
+          }
+          var config = getPerDiemConfig(destination ? destination.value : "");
+          renderPerDiemSummary(config, count);
+        });
+      }
+
+      if (destinationModal) {
+        destinationModal.addEventListener("click", function (event) {
+          if (event.target === destinationModal) {
+            closeDestinationModal();
+          }
+        });
+      }
+
+      [startDate, nights, destination].forEach(function (input) {
+        if (!input) {
+          return;
+        }
+        input.addEventListener("input", function () {
+          markPerDiemDirty();
+          updateActionState();
+        });
+        input.addEventListener("change", function () {
+          markPerDiemDirty();
+          updateActionState();
+        });
+      });
+
+      lineNumber = setLine(getTargetLine());
+
+      if (returnBtn) {
+        returnBtn.addEventListener("click", function () {
+          if (!isFormValid()) {
+            window.alert("Please complete all required fields before returning.");
+            return;
+          }
+          if (!perDiemGenerated) {
+            window.alert("Please click Generate Per Diem before saving and exiting.");
+            return;
+          }
+          saveCurrentLine(lineNumber);
+          localStorage.setItem("cashExpensesActiveTab", "per-diem");
+          window.location.href = "cash-expenses.html";
+        });
+      }
+
+      if (newBtn) {
+        newBtn.addEventListener("click", function () {
+          if (!isFormValid()) {
+            return;
+          }
+          saveCurrentLine(lineNumber);
+          updateLineNav();
+          var nextLine = findNextEmptyLine(lineNumber + 1);
+          if (nextLine === null) {
+            nextLine = lineNumber;
+          }
+          lineNumber = setLine(nextLine);
+        });
+      }
+
+      if (lineBack) {
+        lineBack.addEventListener("click", function () {
+          var list = getNonEmptyLines();
+          var index = list.indexOf(lineNumber);
+          if (index > 0) {
+            lineNumber = setLine(list[index - 1]);
+          }
+        });
+      }
+
+      if (lineNext) {
+        lineNext.addEventListener("click", function () {
+          var list = getNonEmptyLines();
+          var index = list.indexOf(lineNumber);
+          if (index > -1 && index < list.length - 1) {
+            lineNumber = setLine(list[index + 1]);
+          }
+        });
+      }
+
+      if (removeBtn) {
+        removeBtn.addEventListener("click", function () {
+          var lines = getStoredLines();
+          delete lines[String(lineNumber)];
+          storeLines(lines);
+          localStorage.setItem("cashExpensesActiveTab", "per-diem");
+          window.location.href = "cash-expenses.html";
+        });
+      }
+
+      updateActionState();
+      updateLineNav();
+    })();
+  </script>
+</body>
+</html>

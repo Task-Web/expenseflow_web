@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ExpenseFlow Reports</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user="TMCHAN" data-api-base="/api">
+  <div data-component="topbar"></div>
+
+  <div class="content">
+    <h1>Expenses Home</h1>
+    <div class="actions">
+      <a class="btn" href="create-expense.html?new=1">Create New Expense Report</a>
+      <a class="btn is-hidden" id="resume-expense" href="create-expense.html?resume=1">Resume</a>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Track Submitted Expense Reports</div>
+      <div class="section-desc">
+        The following expense reports are either outstanding or have been paid in the last 30 days.
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Report Number</th>
+            <th>Report Submit Date</th>
+            <th>Cost Centre</th>
+            <th>Employee Number</th>
+          <th>Employee Name</th>
+          <th>Last Update Date</th>
+          <th>Current Approver</th>
+          <th>Report Total (HKD) Purpose</th>
+          <th>Withdraw</th>
+        </tr>
+      </thead>
+      <tbody id="submitted-report-body">
+          <tr>
+            <td><a href="submitted-report.html?report=ER-2025-1106-001">ER-2025-1106-001</a></td>
+            <td>06-NOV-2025</td>
+            <td>14700</td>
+            <td>00116802</td>
+            <td>Chan Tai Man</td>
+            <td>06-NOV-2025</td>
+            <td>Department Checker</td>
+            <td>31,111.42 HKD colm trip</td>
+            <td>N/A</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="note">
+        If the status is Pending Your Resolution, you were sent a notification explaining the required action.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Update Expense Reports</div>
+      <div class="section-desc">
+        Click an Update icon to make changes to a saved, rejected, or returned expense report.
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Cost Centre</th>
+            <th>Employee Number</th>
+            <th>Employee Name</th>
+            <th>Report Number</th>
+            <th>Report Date</th>
+            <th>Status</th>
+            <th>Report Total Purpose</th>
+            <th>Last Updated By</th>
+            <th>Update</th>
+            <th>Duplicate</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="11">No results found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Notifications</div>
+      <div class="filters">
+        <span>View</span>
+        <select>
+          <option>Open Notifications</option>
+        </select>
+        <button class="btn" style="padding: 1px 8px;">Go</button>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width: 50%;">From</th>
+            <th>Subject</th>
+            <th>Sent</th>
+            <th>Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="4">There are no notifications in this view.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+
+  <div data-component="footer"></div>
+
+  <script src="app.js"></script>
+  <script type="module">
+    import { syncSubmittedReports } from "./state-sync.js";
+
+    (function () {
+      var resumeButton = document.getElementById("resume-expense");
+      var resumeKeys = [
+        "expenseHeader",
+        "expenseLines",
+        "perDiemLines",
+        "expenseAllocations"
+      ];
+      var hasResume = resumeKeys.some(function (key) {
+        return Boolean(localStorage.getItem(key));
+      });
+      if (resumeButton) {
+        resumeButton.classList.toggle("is-hidden", !hasResume);
+      }
+
+      var tableBody = document.getElementById("submitted-report-body");
+      if (!tableBody) {
+        return;
+      }
+
+      function formatNumber(value) {
+        if (!Number.isFinite(value)) {
+          return "";
+        }
+        var parts = value.toFixed(2).split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+      }
+
+      var stored = [];
+      try {
+        stored = JSON.parse(localStorage.getItem("submittedExpenseReports") || "[]");
+      } catch (error) {
+        stored = [];
+      }
+      syncSubmittedReports(stored);
+      if (!Array.isArray(stored) || !stored.length) {
+        return;
+      }
+
+      var existing = {};
+      Array.prototype.slice.call(tableBody.querySelectorAll("tr")).forEach(function (row) {
+        var cell = row.querySelector("td");
+        if (!cell) {
+          return;
+        }
+        var link = cell.querySelector("a");
+        var value = link ? link.textContent : cell.textContent;
+        value = String(value || "").trim();
+        if (value) {
+          existing[value] = true;
+        }
+      });
+
+      for (var i = stored.length - 1; i >= 0; i -= 1) {
+        var report = stored[i];
+        if (!report || !report.reportNumber || existing[report.reportNumber]) {
+          continue;
+        }
+        var totalValue = Number.isFinite(report.reportTotal)
+          ? report.reportTotal
+          : parseFloat(report.reportTotal);
+        var totalText = Number.isFinite(totalValue) ? formatNumber(totalValue) + " HKD" : "";
+        var purposeText = report.purpose ? " " + report.purpose : "";
+        var totalPurpose = totalText ? totalText + purposeText : purposeText.trim();
+
+        var row = document.createElement("tr");
+        var employeeName = report.employeeName || "";
+        if (employeeName === "Yu, Tao") {
+          employeeName = "Chan Tai Man";
+        }
+        var withdrawCell = report.reportNumber === "ER-2025-1106-001"
+          ? "N/A"
+          : "<button class=\"mini-btn withdraw-btn\" type=\"button\" data-report=\"" +
+            report.reportNumber +
+            "\">Withdraw</button>";
+
+        row.innerHTML =
+          "<td><a href=\"submitted-report.html?report=" + encodeURIComponent(report.reportNumber) + "\">" +
+          report.reportNumber +
+          "</a></td>" +
+          "<td>" + (report.submitDate || "") + "</td>" +
+          "<td>" + (report.costCenter || "") + "</td>" +
+          "<td>" + (report.employeeNumber || "") + "</td>" +
+          "<td>" + employeeName + "</td>" +
+          "<td>" + (report.lastUpdateDate || "") + "</td>" +
+          "<td>" + (report.currentApprover || "") + "</td>" +
+          "<td>" + totalPurpose + "</td>" +
+          "<td>" + withdrawCell + "</td>";
+        tableBody.insertBefore(row, tableBody.firstChild);
+      }
+
+      tableBody.addEventListener("click", function (event) {
+        var target = event.target;
+        if (!target || !target.classList.contains("withdraw-btn")) {
+          return;
+        }
+        var reportNumber = target.getAttribute("data-report");
+        if (!reportNumber) {
+          return;
+        }
+        var updated = [];
+        try {
+          var storedReports = JSON.parse(localStorage.getItem("submittedExpenseReports") || "[]");
+          if (Array.isArray(storedReports)) {
+            updated = storedReports.filter(function (report) {
+              return report && report.reportNumber !== reportNumber;
+            });
+          }
+        } catch (error) {
+          updated = [];
+        }
+        localStorage.setItem("submittedExpenseReports", JSON.stringify(updated));
+        syncSubmittedReports(updated);
+        var row = target.closest("tr");
+        if (row && row.parentNode === tableBody) {
+          tableBody.removeChild(row);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

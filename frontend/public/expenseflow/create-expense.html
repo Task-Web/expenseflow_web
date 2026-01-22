@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Expense Report - General Information</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user="TMCHAN" data-api-base="/api">
+  <div data-component="topbar"></div>
+
+  <div class="content">
+    <div data-component="wizard" data-step="1"></div>
+
+      <div class="page-title-row">
+        <div class="page-title">Create Expense Report: General Information</div>
+        <div class="page-actions">
+          <button class="btn" id="header-save">Save</button>
+        <button class="btn" id="header-cancel">Cancel</button>
+        <a class="btn" href="index.html" id="header-back">Back</a>
+        <span>Step 1 of 4</span>
+        <a class="btn" href="cash-expenses.html" id="next-step">Next</a>
+      </div>
+    </div>
+
+    <div class="required-note">* Indicates required field</div>
+
+    <div class="form-grid">
+      <div>
+        <div class="form-row">
+          <span class="req">*</span>
+          <label>Employee Name</label>
+          <div class="input-group">
+            <input class="input" id="employee-name" />
+            <input type="hidden" id="employee-number" />
+            <button class="input-icon input-icon-btn" id="employee-search" type="button" aria-label="Search employee">
+              <svg class="icon-search" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+                <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-row">
+          <span class="req"></span>
+          <label>Expense Cost Center</label>
+          <input class="input" id="cost-center" />
+        </div>
+        <div class="form-row">
+          <span class="req"></span>
+          <label>Reimbursement Currency</label>
+          <select
+            class="input"
+            id="reimbursement-currency"
+            data-options="currencies-optional"
+          ></select>
+        </div>
+        <div class="form-row">
+          <span class="req"></span>
+          <label>Expense Template</label>
+          <select
+            class="input"
+            id="template-select"
+            data-options="templates"
+          ></select>
+        </div>
+        <div class="form-row">
+          <span class="req"></span>
+          <label>Expense Template Description</label>
+          <input class="input" id="template-desc" />
+        </div>
+        <div class="checkbox-row">
+          <span class="req">*</span>
+          <input type="checkbox" id="notes-ack" />
+          <span>Checking this box implies that you have read the Notes.</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="form-row" id="application-row">
+          <span class="req">*</span>
+          <label>Application Number</label>
+          <input class="input-sm" id="application-number" />
+        </div>
+        <div class="form-row top-align">
+          <span class="req"></span>
+          <label>Description</label>
+          <textarea class="textarea" id="expense-description"></textarea>
+        </div>
+        <div class="form-row">
+          <span class="req"></span>
+          <label>Submitted From App:</label>
+          <input class="input" id="submitted-from-app" />
+        </div>
+        <div class="form-row is-hidden" id="budget-row">
+          <span class="req"></span>
+          <label>Budget Amount</label>
+          <input class="input-sm" id="budget-amount" />
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="notes-title">Notes</div>
+      <ol class="notes-list" id="notes-list"></ol>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+
+  <div class="modal-backdrop" id="employee-modal">
+    <div class="modal-card approver-modal-card" role="dialog" aria-modal="true" aria-labelledby="employee-modal-title">
+      <div class="modal-header" id="employee-modal-title">Search and Select: Employee</div>
+      <div class="modal-controls">
+        <input class="input approver-search-input" id="employee-search-input" aria-label="Search employee" />
+        <button class="mini-btn" type="button" id="employee-go">Go</button>
+      </div>
+      <div class="approver-list" id="employee-list"></div>
+      <div class="modal-footer">
+        <button class="mini-btn" type="button" id="employee-cancel">Cancel</button>
+        <button class="mini-btn" type="button" id="employee-select" disabled="disabled">Select</button>
+      </div>
+    </div>
+  </div>
+
+  <div data-component="footer"></div>
+
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      var app = window.ExpenseApp;
+      var data = app ? app.data : null;
+      var storage = app ? app.storage : null;
+
+      var templateSelect = document.getElementById("template-select");
+      var templateDesc = document.getElementById("template-desc");
+      var notesList = document.getElementById("notes-list");
+      var budgetRow = document.getElementById("budget-row");
+      var applicationRow = document.getElementById("application-row");
+      var employeeName = document.getElementById("employee-name");
+      var employeeNumber = document.getElementById("employee-number");
+      var employeeSearchButton = document.getElementById("employee-search");
+      var employeeModal = document.getElementById("employee-modal");
+      var employeeSearchInput = document.getElementById("employee-search-input");
+      var employeeList = document.getElementById("employee-list");
+      var employeeCancel = document.getElementById("employee-cancel");
+      var employeeSelect = document.getElementById("employee-select");
+      var employeeGo = document.getElementById("employee-go");
+      var costCenter = document.getElementById("cost-center");
+      var reimbursementCurrency = document.getElementById("reimbursement-currency");
+      var applicationNumber = document.getElementById("application-number");
+      var expenseDescription = document.getElementById("expense-description");
+      var submittedFromApp = document.getElementById("submitted-from-app");
+      var budgetAmount = document.getElementById("budget-amount");
+      var notesAck = document.getElementById("notes-ack");
+      var nextStep = document.getElementById("next-step");
+      var headerSave = document.getElementById("header-save");
+      var headerBack = document.getElementById("header-back");
+      var headerCancel = document.getElementById("header-cancel");
+      var headerDraftKey = "expenseHeaderDraft";
+      var headerDirtyKey = "expenseHeaderDirty";
+      var hasUnsavedChanges = localStorage.getItem(headerDirtyKey) === "true";
+      var selectedEmployee = null;
+      var reportSessionKey = "expenseReportSessionActive";
+      var queryParams = new URLSearchParams(window.location.search);
+      var isResume = queryParams.get("resume") === "1";
+      var isNew = queryParams.get("new") === "1";
+      var hasSession = sessionStorage.getItem(reportSessionKey) === "true";
+
+      var employeeDirectory = [
+        { name: "Chan Tai Man", number: "00116802", costCenter: "14700" },
+        { name: "Cheng Wai Ling", number: "00113245", costCenter: "15210" },
+        { name: "Cheung Ho Yiu", number: "00114987", costCenter: "15235" },
+        { name: "Fung Hoi Lam", number: "00112376", costCenter: "15280" },
+        { name: "Ho Wai Kay", number: "00115834", costCenter: "15310" },
+        { name: "Lam Mei Sze", number: "00116791", costCenter: "15345" },
+        { name: "Leung Ka Ming", number: "00114108", costCenter: "15390" },
+        { name: "Liu Chi Kin", number: "00115429", costCenter: "15420" },
+        { name: "Ng Sze Ting", number: "00116257", costCenter: "15475" },
+        { name: "Wong Chi Wai", number: "00113690", costCenter: "15510" },
+        { name: "Yip Wing Man", number: "00114563", costCenter: "15545" },
+        { name: "Yuen Lok Fung", number: "00117022", costCenter: "15580" }
+      ];
+
+      var templateNotes = data && data.notes && data.notes.templates ? data.notes.templates : {};
+      var defaultTemplate = data && data.notes && data.notes.defaultTemplate ? data.notes.defaultTemplate : "CPDG";
+
+      function setNotes(items) {
+        notesList.innerHTML = "";
+        for (var i = 0; i < items.length; i += 1) {
+          var li = document.createElement("li");
+          li.textContent = items[i];
+          notesList.appendChild(li);
+        }
+      }
+
+      function resolveTemplateConfig(value) {
+        if (!value) {
+          return { desc: "", notes: [], useBudget: false };
+        }
+        if (templateNotes && templateNotes[value]) {
+          return templateNotes[value];
+        }
+        if (templateNotes && templateNotes[defaultTemplate]) {
+          return templateNotes[defaultTemplate];
+        }
+        return { desc: "", notes: [], useBudget: false };
+      }
+
+      function findEmployeeByName(value) {
+        var normalized = String(value || "").trim().toLowerCase();
+        if (!normalized) {
+          return null;
+        }
+        for (var i = 0; i < employeeDirectory.length; i += 1) {
+          if (employeeDirectory[i].name.toLowerCase() === normalized) {
+            return employeeDirectory[i];
+          }
+        }
+        return null;
+      }
+
+      function applyEmployeeSelection(employee, markDirty) {
+        if (!employee || !employeeName) {
+          return;
+        }
+        employeeName.value = employee.name;
+        if (employeeNumber) {
+          employeeNumber.value = employee.number;
+        }
+        if (costCenter && employee.costCenter) {
+          costCenter.value = employee.costCenter;
+        }
+        saveDraftHeader(markDirty);
+      }
+
+      function syncCostCenterFromName(markDirty) {
+        if (!employeeName) {
+          return;
+        }
+        var match = findEmployeeByName(employeeName.value);
+        if (!match) {
+          return;
+        }
+        if (employeeNumber) {
+          employeeNumber.value = match.number;
+        }
+        if (costCenter && match.costCenter) {
+          costCenter.value = match.costCenter;
+        }
+        saveDraftHeader(markDirty);
+      }
+
+      function renderEmployeeList(query) {
+        if (!employeeList) {
+          return;
+        }
+        var normalized = String(query || "").toLowerCase();
+        var matches = employeeDirectory.filter(function (employee) {
+          var name = employee.name.toLowerCase();
+          var number = employee.number.toLowerCase();
+          return name.indexOf(normalized) > -1 || number.indexOf(normalized) > -1;
+        });
+        employeeList.innerHTML = "";
+        selectedEmployee = null;
+        if (employeeSelect) {
+          employeeSelect.disabled = true;
+        }
+        if (!matches.length) {
+          var empty = document.createElement("div");
+          empty.className = "approver-empty";
+          empty.textContent = "No items were found matching your request.";
+          employeeList.appendChild(empty);
+          return;
+        }
+        matches.forEach(function (employee) {
+          var item = document.createElement("button");
+          item.type = "button";
+          item.className = "approver-item";
+          item.textContent = employee.name + " (" + employee.number + ")";
+          item.addEventListener("click", function () {
+            selectedEmployee = employee;
+            Array.prototype.slice.call(employeeList.querySelectorAll(".approver-item")).forEach(function (btn) {
+              btn.classList.remove("is-selected");
+            });
+            item.classList.add("is-selected");
+            if (employeeSelect) {
+              employeeSelect.disabled = false;
+            }
+          });
+          employeeList.appendChild(item);
+        });
+      }
+
+      function openEmployeeModal() {
+        if (!employeeModal) {
+          return;
+        }
+        if (employeeSearchInput) {
+          employeeSearchInput.value = "";
+        }
+        renderEmployeeList("");
+        employeeModal.classList.add("open");
+        if (employeeSearchInput) {
+          employeeSearchInput.focus();
+        }
+      }
+
+      function closeEmployeeModal() {
+        if (employeeModal) {
+          employeeModal.classList.remove("open");
+        }
+        selectedEmployee = null;
+      }
+
+      function clearCurrentReportData() {
+        [
+          "expenseHeader",
+          headerDraftKey,
+          headerDirtyKey,
+          "expenseAttachmentsDraft",
+          "expenseLines",
+          "expenseLinesDraft",
+          "perDiemLines",
+          "perDiemLinesDraft",
+          "expenseAllocations",
+          "expenseTargetLine",
+          "perDiemTargetLine",
+          "cashExpensesDirty",
+          "reviewApprovers",
+          "reviewApproversDraft",
+          "reviewApproversDirty"
+        ].forEach(function (key) {
+          localStorage.removeItem(key);
+        });
+      }
+
+      function clearReportSession() {
+        clearCurrentReportData();
+        sessionStorage.removeItem(reportSessionKey);
+      }
+
+      function getRequiredMissing() {
+        var missing = [];
+        var employeeValue = employeeName ? employeeName.value.trim() : "";
+        if (!employeeValue) {
+          missing.push("Employee Name");
+        }
+        if (templateSelect && templateSelect.value !== "Overseas_Travelling") {
+          var appValue = applicationNumber ? applicationNumber.value.trim() : "";
+          if (!appValue) {
+            missing.push("Application Number");
+          }
+        }
+        if (notesAck && !notesAck.checked) {
+          missing.push("Notes acknowledgement");
+        }
+        return missing;
+      }
+
+      function getApplicationNumberError() {
+        if (!templateSelect || templateSelect.value === "Overseas_Travelling") {
+          return "";
+        }
+        var appValue = applicationNumber ? applicationNumber.value.trim() : "";
+        if (!appValue) {
+          return "";
+        }
+        if (!/^\d+$/.test(appValue)) {
+          return "Error: Application Number must be numeric. Unable to continue.";
+        }
+        return "Error: This application number does not match our records. Unable to continue.";
+      }
+
+      function applyTemplate(markDirty) {
+        var config = resolveTemplateConfig(templateSelect.value);
+        templateDesc.value = config.desc || "";
+        setNotes(config.notes || []);
+        if (config.useBudget) {
+          budgetRow.classList.remove("is-hidden");
+          applicationRow.classList.add("is-hidden");
+        } else {
+          budgetRow.classList.add("is-hidden");
+          applicationRow.classList.remove("is-hidden");
+        }
+        saveDraftHeader(markDirty);
+      }
+
+      function readJSON(key, fallback) {
+        try {
+          var raw = localStorage.getItem(key);
+          if (!raw) {
+            return fallback;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function getSavedHeader() {
+        if (storage) {
+          return storage.getHeader();
+        }
+        return readJSON("expenseHeader", {});
+      }
+
+      function getDraftHeader() {
+        var raw = localStorage.getItem(headerDraftKey);
+        if (!raw) {
+          return getSavedHeader();
+        }
+        try {
+          return JSON.parse(raw) || {};
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function buildHeader() {
+        return {
+          employeeName: employeeName.value,
+          employeeNumber: employeeNumber ? employeeNumber.value : "",
+          costCenter: costCenter.value,
+          reimbursementCurrency: reimbursementCurrency.value,
+          template: templateSelect.value,
+          templateDesc: templateDesc.value,
+          applicationNumber: applicationNumber.value,
+          expenseDescription: expenseDescription.value,
+          submittedFromApp: submittedFromApp.value,
+          budgetAmount: budgetAmount.value,
+          notesAck: notesAck ? notesAck.checked : false
+        };
+      }
+
+      function markHeaderDirty() {
+        hasUnsavedChanges = true;
+        localStorage.setItem(headerDirtyKey, "true");
+      }
+
+      function saveDraftHeader(markDirty) {
+        var header = buildHeader();
+        localStorage.setItem(headerDraftKey, JSON.stringify(header));
+        if (markDirty !== false) {
+          markHeaderDirty();
+        }
+      }
+
+      function commitHeader() {
+        var header = buildHeader();
+        if (storage) {
+          storage.saveHeader(header);
+        } else {
+          localStorage.setItem("expenseHeader", JSON.stringify(header));
+        }
+        localStorage.setItem(headerDraftKey, JSON.stringify(header));
+        localStorage.setItem(headerDirtyKey, "false");
+        hasUnsavedChanges = false;
+      }
+
+      function applyHeader() {
+        var header = getDraftHeader();
+        if (header.employeeName) {
+          employeeName.value = header.employeeName;
+        }
+        if (employeeNumber && header.employeeNumber) {
+          employeeNumber.value = header.employeeNumber;
+        }
+        if (header.costCenter) {
+          costCenter.value = header.costCenter;
+        }
+        if (header.reimbursementCurrency) {
+          reimbursementCurrency.value = header.reimbursementCurrency;
+        }
+        if (header.template) {
+          templateSelect.value = header.template;
+        }
+        if (header.templateDesc) {
+          templateDesc.value = header.templateDesc;
+        }
+        if (header.applicationNumber) {
+          applicationNumber.value = header.applicationNumber;
+        }
+        if (header.expenseDescription) {
+          expenseDescription.value = header.expenseDescription;
+        }
+        if (header.submittedFromApp) {
+          submittedFromApp.value = header.submittedFromApp;
+        }
+        if (header.budgetAmount) {
+          budgetAmount.value = header.budgetAmount;
+        }
+        if (notesAck && typeof header.notesAck === "boolean") {
+          notesAck.checked = header.notesAck;
+        }
+      }
+
+      templateSelect.addEventListener("change", function () {
+        applyTemplate(true);
+      });
+      [
+        employeeName,
+        costCenter,
+        reimbursementCurrency,
+        templateSelect,
+        templateDesc,
+        applicationNumber,
+        expenseDescription,
+        submittedFromApp,
+        budgetAmount,
+        notesAck
+      ].forEach(function (input) {
+        if (!input) {
+          return;
+        }
+        input.addEventListener("input", saveDraftHeader);
+        input.addEventListener("change", saveDraftHeader);
+      });
+
+      if (employeeSearchButton) {
+        employeeSearchButton.addEventListener("click", openEmployeeModal);
+      }
+
+      if (employeeSearchInput) {
+        employeeSearchInput.addEventListener("input", function () {
+          renderEmployeeList(employeeSearchInput.value);
+        });
+        employeeSearchInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            renderEmployeeList(employeeSearchInput.value);
+          }
+          if (event.key === "Escape") {
+            closeEmployeeModal();
+          }
+        });
+      }
+
+      if (employeeGo) {
+        employeeGo.addEventListener("click", function () {
+          renderEmployeeList(employeeSearchInput ? employeeSearchInput.value : "");
+        });
+      }
+
+      if (employeeCancel) {
+        employeeCancel.addEventListener("click", closeEmployeeModal);
+      }
+
+      if (employeeSelect) {
+        employeeSelect.addEventListener("click", function () {
+          if (!selectedEmployee) {
+            return;
+          }
+          applyEmployeeSelection(selectedEmployee, true);
+          closeEmployeeModal();
+        });
+      }
+
+      if (employeeModal) {
+        employeeModal.addEventListener("click", function (event) {
+          if (event.target === employeeModal) {
+            closeEmployeeModal();
+          }
+        });
+      }
+
+      if (!isResume && (isNew || !hasSession)) {
+        clearCurrentReportData();
+        sessionStorage.setItem(reportSessionKey, "true");
+        if (isNew && window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+        }
+      } else if (isResume) {
+        sessionStorage.setItem(reportSessionKey, "true");
+      }
+
+      if (app && app.ui && app.ui.populateSelects) {
+        app.ui.populateSelects();
+      }
+      applyHeader();
+      if (costCenter && !costCenter.value) {
+        syncCostCenterFromName(false);
+      }
+      applyTemplate(false);
+
+      if (employeeName) {
+        employeeName.addEventListener("change", function () {
+          syncCostCenterFromName(true);
+        });
+      }
+
+      if (headerSave) {
+        headerSave.addEventListener("click", function () {
+          commitHeader();
+          window.alert("Save successful.");
+        });
+      }
+
+      if (headerCancel) {
+        headerCancel.addEventListener("click", function () {
+          clearReportSession();
+          window.location.href = "index.html";
+        });
+      }
+
+      if (nextStep) {
+        nextStep.addEventListener("click", function (event) {
+          if (hasUnsavedChanges) {
+            event.preventDefault();
+            alert("Please save your changes before continuing.");
+            return;
+          }
+          var missing = getRequiredMissing();
+          if (missing.length) {
+            event.preventDefault();
+            alert(
+              "Please complete the required fields (*) before continuing:\n" +
+                missing.join("\n")
+            );
+            return;
+          }
+          var appError = getApplicationNumberError();
+          if (appError) {
+            event.preventDefault();
+            alert(appError);
+          }
+        });
+      }
+
+      if (headerBack) {
+        headerBack.addEventListener("click", function (event) {
+          if (hasUnsavedChanges) {
+            event.preventDefault();
+            alert("Please save your changes before leaving this page.");
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Expense Report: Expense Allocations</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user="TMCHAN" data-api-base="/api">
+  <div data-component="topbar"></div>
+
+  <div class="content">
+    <div data-component="wizard" data-step="3"></div>
+
+      <div class="page-title-row">
+      <div class="page-title">Create Expense Report: Expense Allocations</div>
+      <div class="page-actions">
+        <button class="btn">Check Fund</button>
+        <button class="btn" id="alloc-save">Save</button>
+        <a class="btn" href="cash-expenses.html" id="alloc-back">Back</a>
+        <span>Step 3 of 4</span>
+        <a class="btn" href="review.html" id="alloc-next">Next</a>
+      </div>
+    </div>
+
+    <div class="hint">Use the fields below to update expense allocations for selected expense lines. Apply an amount split to a single expense line.</div>
+    <div class="required-note">* Indicates required field</div>
+    <div class="hint"><strong>Expense Template:</strong> Overseas Travelling Claim</div>
+    <div class="hint"><strong>Charging Account Information from App:</strong></div>
+    <div class="hint">TIP Report number will appear when you click the "Save" button.</div>
+
+    <div class="allocation-panel">
+      <div class="allocation-toolbar">
+        <span>Select Expense Lines:</span>
+        <button class="mini-btn">Update Allocations</button>
+        <button class="mini-btn">Revert</button>
+        <select class="input" style="width: 120px; height: 18px;">
+          <option>My Allocations</option>
+        </select>
+        <button class="mini-btn">Apply</button>
+      </div>
+    <div class="allocation-expand"><a href="#" id="expand-all">Expand All</a> | <a href="#" id="collapse-all">Collapse All</a></div>
+      <div class="allocation-scrollwrap">
+        <table class="allocation-table" id="alloc-table">
+          <thead>
+            <tr>
+              <th style="width: 26px;"></th>
+              <th style="width: 40px;">Focus</th>
+              <th style="width: 50px;">Line</th>
+              <th style="width: 90px;">Payment Method</th>
+              <th style="width: 90px;">Date</th>
+              <th style="width: 230px;">Expense Type</th>
+              <th style="width: 110px;">Receipt Amount</th>
+              <th style="width: 130px;">Reimbursable Amount (HKD)</th>
+              <th style="width: 80px;">Location</th>
+              <th style="width: 100px;">Description</th>
+              <th style="width: 110px;">Natural Account</th>
+              <th style="width: 250px;">Analysis</th>
+              <th style="width: 110px;">Budget Holder</th>
+              <th style="width: 90px;">Cost Centre</th>
+              <th style="width: 90px;">Fund Source</th>
+              <th style="width: 60px;">Entity</th>
+              <th style="width: 90px;">Dept Ref #1</th>
+              <th style="width: 90px;">Dept Ref #2</th>
+            </tr>
+          </thead>
+          <tbody id="alloc-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+
+  <div data-component="footer"></div>
+
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      var app = window.ExpenseApp;
+      var data = app ? app.data : null;
+      var storage = app ? app.storage : null;
+      var lineUtils = app ? app.lines : null;
+      var format = app ? app.format : null;
+      var perDiemData = app ? app.perDiem : null;
+      var currencyLabelMap = buildCurrencyLabelMap(app);
+      var allocNext = document.getElementById("alloc-next");
+      var allocSave = document.getElementById("alloc-save");
+      var allocBack = document.getElementById("alloc-back");
+      var allocationEdits = loadAllocations();
+      var hasUnsavedChanges = false;
+      var body = document.getElementById("alloc-body");
+      var isCollapsed = false;
+
+      function getStoredLines() {
+        if (storage) {
+          return storage.getLines();
+        }
+        return {};
+      }
+
+      function getHeader() {
+        if (storage && storage.getHeader) {
+          return storage.getHeader();
+        }
+        try {
+          return JSON.parse(localStorage.getItem("expenseHeader") || "{}");
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function loadAllocations() {
+        try {
+          var stored = JSON.parse(localStorage.getItem("expenseAllocations") || "{}");
+          if (stored && typeof stored === "object") {
+            return stored;
+          }
+        } catch (error) {
+          return {};
+        }
+        return {};
+      }
+
+      function saveAllocations() {
+        localStorage.setItem("expenseAllocations", JSON.stringify(allocationEdits));
+        hasUnsavedChanges = false;
+      }
+
+      function buildCurrencyLabelMap(appRef) {
+        var map = {};
+        var list = appRef && appRef.data ? appRef.data.currencies : [];
+        if (!list || !list.length) {
+          return map;
+        }
+        list.forEach(function (entry) {
+          var text = String(entry || "");
+          if (!text) {
+            return;
+          }
+          var parts = text.split(" - ");
+          var code = parts[0];
+          if (code) {
+            map[code] = text;
+          }
+        });
+        return map;
+      }
+
+      function getPerDiemLines() {
+        if (storage && storage.getPerDiemLines) {
+          return storage.getPerDiemLines();
+        }
+        try {
+        return JSON.parse(localStorage.getItem("perDiemLines") || "{}");
+      } catch (error) {
+        return {};
+      }
+    }
+
+      function getAllocValue(lineKey, field) {
+        var stored = allocationEdits[lineKey] || {};
+        if (Object.prototype.hasOwnProperty.call(stored, field)) {
+          return stored[field];
+        }
+        return undefined;
+      }
+
+      function buildAllocInput(lineKey, field, maxLen) {
+        var value = getAllocValue(lineKey, field);
+        if (value === undefined && Number.isFinite(maxLen) && maxLen > 0) {
+          value = new Array(maxLen + 1).join("0");
+        }
+        return (
+          "<input class=\"alloc-input\" " +
+          "data-line=\"" + lineKey + "\" " +
+          "data-field=\"" + field + "\" " +
+          "data-maxlen=\"" + maxLen + "\" " +
+          "maxlength=\"" + maxLen + "\" " +
+          "inputmode=\"numeric\" pattern=\"[0-9]*\" " +
+          "value=\"" + value + "\" />"
+        );
+      }
+
+      function sanitizeDigits(value, maxLen) {
+        var cleaned = String(value || "").replace(/\D/g, "");
+        if (Number.isFinite(maxLen) && maxLen > 0 && cleaned.length > maxLen) {
+          return cleaned.slice(0, maxLen);
+        }
+        return cleaned;
+      }
+
+      function captureAllocInputs() {
+        var updates = {};
+        document.querySelectorAll(".alloc-input").forEach(function (input) {
+          var lineKey = input.getAttribute("data-line");
+          var field = input.getAttribute("data-field");
+          var maxLen = parseInt(input.getAttribute("data-maxlen"), 10);
+          if (!lineKey || !field) {
+            return;
+          }
+          var value = sanitizeDigits(input.value, maxLen);
+          if (input.value !== value) {
+            input.value = value;
+          }
+          if (!updates[lineKey]) {
+            updates[lineKey] = {};
+          }
+          updates[lineKey][field] = value;
+        });
+
+        Object.keys(updates).forEach(function (lineKey) {
+          if (!allocationEdits[lineKey]) {
+            allocationEdits[lineKey] = {};
+          }
+          Object.keys(updates[lineKey]).forEach(function (field) {
+            allocationEdits[lineKey][field] = updates[lineKey][field];
+          });
+        });
+      }
+
+      function wireAllocInputs() {
+        document.querySelectorAll(".alloc-input").forEach(function (input) {
+          var maxLen = parseInt(input.getAttribute("data-maxlen"), 10);
+          input.value = sanitizeDigits(input.value, maxLen);
+          input.addEventListener("input", function () {
+            var next = sanitizeDigits(input.value, maxLen);
+            if (input.value !== next) {
+              input.value = next;
+            }
+            var lineKey = input.getAttribute("data-line");
+            var field = input.getAttribute("data-field");
+            if (!lineKey || !field) {
+              return;
+            }
+            if (!allocationEdits[lineKey]) {
+              allocationEdits[lineKey] = {};
+            }
+            allocationEdits[lineKey][field] = next;
+            hasUnsavedChanges = true;
+          });
+        });
+      }
+
+      function lineHasData(lineData) {
+        if (lineUtils) {
+          return lineUtils.hasData(lineData);
+        }
+        return Boolean(
+          lineData &&
+            (lineData.receiptDate ||
+              lineData.receiptAmount ||
+              lineData.expenseType ||
+              lineData.description ||
+              lineData.reimbAmount ||
+              lineData.receiptCurrency ||
+              lineData.exchangeRate)
+        );
+      }
+
+      function perDiemLineHasData(lineData) {
+        if (!lineData) {
+          return false;
+        }
+        return Boolean(
+          lineData.expenseType ||
+            lineData.startDate ||
+            lineData.endDate ||
+            lineData.destination ||
+            lineData.description ||
+            lineData.nights ||
+            lineData.reimbAmount
+        );
+      }
+
+      function formatReceiptAmount(lineData) {
+        if (format) {
+          return format.formatReceiptAmount(lineData);
+        }
+        if (!lineData || !lineData.receiptAmount) {
+          return "";
+        }
+        var currency = lineData.receiptCurrency || "HKD";
+        return lineData.receiptAmount + " " + currency;
+      }
+
+      function formatReimbAmount(lineData) {
+        if (format) {
+          return format.formatReimbAmount(lineData);
+        }
+        if (!lineData) {
+          return "";
+        }
+        if (lineData.reimbAmount) {
+          return lineData.reimbAmount;
+        }
+        return lineData.receiptAmount ? lineData.receiptAmount : "";
+      }
+
+      function resolvePerDiemConfig(destinationValue) {
+        if (perDiemData && perDiemData.resolve) {
+          return perDiemData.resolve(destinationValue);
+        }
+        return { currency: "HKD", amount: 0, rate: 1 };
+      }
+
+      function formatAmount(value) {
+        return Number.isFinite(value) ? value.toFixed(2) : "";
+      }
+
+      function formatCurrencyAmount(amount, currency) {
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return "";
+        }
+        var label = currencyLabelMap[currency] || currency;
+        return formatAmount(amount) + " " + label;
+      }
+
+      function parseCount(value) {
+        var parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function getPerDiemTotals(lineData) {
+        var config = resolvePerDiemConfig(lineData.destination || "");
+        var nightsCount = parseCount(lineData.nights);
+        var localTotal = nightsCount > 0 ? config.amount * nightsCount : 0;
+        var reimbTotal = parseAmount(lineData.reimbAmount);
+        if (!reimbTotal && localTotal) {
+          reimbTotal = localTotal * config.rate;
+        }
+        return {
+          config: config,
+          localTotal: localTotal,
+          reimbTotal: reimbTotal
+        };
+      }
+
+      function parseAmount(value) {
+        if (format) {
+          return format.parseAmount(value);
+        }
+        if (!value) {
+          return 0;
+        }
+        var cleaned = String(value).replace(/[^0-9.]/g, "");
+        var parsed = parseFloat(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function getLineKeys(lines) {
+        return Object.keys(lines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && lineHasData(lines[String(key)]);
+          })
+          .sort(function (a, b) {
+            return a - b;
+          });
+      }
+
+      function getPerDiemKeys(lines) {
+        return Object.keys(lines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && perDiemLineHasData(lines[String(key)]);
+          })
+          .sort(function (a, b) {
+            return a - b;
+          });
+      }
+
+      function getExpectedAllocations(employeeName) {
+        var map = data && data.employeeAllocations ? data.employeeAllocations : {};
+        if (employeeName && map[employeeName]) {
+          return map[employeeName];
+        }
+        return {
+          analysis: "200010861",
+          budgetHolder: "116802",
+          costCentre: "14700",
+          fundSource: "400"
+        };
+      }
+
+      function validateAllocations() {
+        if (isCollapsed) {
+          isCollapsed = false;
+          renderRows();
+        }
+
+        var lines = getStoredLines();
+        var perDiemLines = getPerDiemLines();
+        var keys = getLineKeys(lines);
+        var perDiemKeys = getPerDiemKeys(perDiemLines);
+        if (!keys.length && !perDiemKeys.length) {
+          window.alert("Error: No expense lines found.");
+          return false;
+        }
+
+        var header = getHeader();
+        var employeeName = header.employeeName || "Employee";
+        var expected = getExpectedAllocations(header.employeeName || "");
+        var expectedAnalysis = expected.analysis;
+        var expectedBudgetHolder = expected.budgetHolder;
+        var expectedCostCentre = expected.costCentre;
+        var expectedFundSource = expected.fundSource;
+        var naturalAccountMap = data && data.naturalAccountByExpenseType ? data.naturalAccountByExpenseType : {};
+
+        var rows = body ? body.querySelectorAll("tr") : [];
+        for (var i = 0; i < rows.length; i += 1) {
+          var cells = rows[i].querySelectorAll("td");
+          if (!cells.length) {
+            continue;
+          }
+          var lineText = cells[2] ? cells[2].textContent.trim() : "";
+          if (!lineText || lineText === "All") {
+            continue;
+          }
+          var expenseType = cells[5] ? cells[5].textContent.trim() : "";
+          var expectedNatural = naturalAccountMap[expenseType];
+          var naturalInput = cells[10] ? cells[10].querySelector("input") : null;
+          var naturalValue = naturalInput ? naturalInput.value.trim() : "";
+          if (expectedNatural && naturalValue !== expectedNatural) {
+            window.alert("Error: Please enter the correct Natural Account.");
+            return false;
+          }
+
+          var analysisInput = cells[11] ? cells[11].querySelector("input") : null;
+          var analysisValue = analysisInput ? analysisInput.value.trim() : "";
+          if (analysisValue !== expectedAnalysis) {
+            window.alert("Error: Please enter the analysis for " + employeeName + ".");
+            return false;
+          }
+
+          var budgetInput = cells[12] ? cells[12].querySelector("input") : null;
+          var budgetValue = budgetInput ? budgetInput.value.trim() : "";
+          if (budgetValue !== expectedBudgetHolder) {
+            window.alert("Error: Please enter the Budget Holder for " + employeeName + ".");
+            return false;
+          }
+
+          var costInput = cells[13] ? cells[13].querySelector("input") : null;
+          var costValue = costInput ? costInput.value.trim() : "";
+          if (costValue !== expectedCostCentre) {
+            window.alert("Error: Please enter the Cost Centre for " + employeeName + ".");
+            return false;
+          }
+
+          var fundInput = cells[14] ? cells[14].querySelector("input") : null;
+          var fundValue = fundInput ? fundInput.value.trim() : "";
+          if (fundValue !== expectedFundSource) {
+            window.alert("Error: Please enter the Fund Source for " + employeeName + ".");
+            return false;
+          }
+        }
+
+        return true;
+      }
+
+      function renderRows() {
+        var lines = getStoredLines();
+        var perDiemLines = getPerDiemLines();
+        var keys = getLineKeys(lines);
+        var perDiemKeys = getPerDiemKeys(perDiemLines);
+
+        body.innerHTML = "";
+
+        var total = 0;
+        keys.forEach(function (key) {
+          var data = lines[String(key)] || {};
+          total += parseAmount(formatReimbAmount(data));
+        });
+        perDiemKeys.forEach(function (key) {
+          var data = perDiemLines[String(key)] || {};
+          var totals = getPerDiemTotals(data);
+          total += totals.reimbTotal || 0;
+        });
+
+        var hasLines = keys.length || perDiemKeys.length;
+        var totalRow = document.createElement("tr");
+        totalRow.className = "alloc-total-row";
+        totalRow.innerHTML =
+          "<td class=\"center\"><input type=\"checkbox\" /></td>" +
+          "<td class=\"center\"></td>" +
+          "<td class=\"center\">All</td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td>" + (hasLines ? total.toFixed(2) : "") + "</td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>";
+        body.appendChild(totalRow);
+
+        if (isCollapsed) {
+          return;
+        }
+
+        keys.forEach(function (key) {
+          var data = lines[String(key)] || {};
+          var row = document.createElement("tr");
+          var lineKey = String(key);
+
+          row.innerHTML =
+            "<td class=\"center\"><input type=\"checkbox\" /></td>" +
+            "<td class=\"center\"></td>" +
+            "<td class=\"center\">" + key + "</td>" +
+            "<td>Cash Receipt</td>" +
+            "<td>" + (data.receiptDate || "") + "</td>" +
+            "<td>" + (data.expenseType || "") + "</td>" +
+            "<td>" + formatReceiptAmount(data) + "</td>" +
+            "<td>" + formatReimbAmount(data) + "</td>" +
+            "<td></td>" +
+            "<td>" + (data.description || "") + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "naturalAccount", 5) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "analysis", 9) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "budgetHolder", 6) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "costCentre", 5) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "fundSource", 3) + "</td>" +
+            "<td class=\"center\">01</td>" +
+            "<td></td>" +
+            "<td></td>";
+
+          body.appendChild(row);
+        });
+
+        var lineOffset = keys.length ? Math.max.apply(null, keys) : 0;
+        perDiemKeys.forEach(function (key, index) {
+          var data = perDiemLines[String(key)] || {};
+          var totals = getPerDiemTotals(data);
+          var lineNumber = lineOffset + index + 1;
+          var row = document.createElement("tr");
+          var reimbText = totals.reimbTotal ? formatAmount(totals.reimbTotal) : "";
+          var lineKey = String(lineNumber);
+
+          row.innerHTML =
+            "<td class=\"center\"><input type=\"checkbox\" /></td>" +
+            "<td class=\"center\"></td>" +
+            "<td class=\"center\">" + lineNumber + "</td>" +
+            "<td>Per Diem</td>" +
+            "<td>" + (data.startDate || "") + "</td>" +
+            "<td>" + (data.expenseType || "") + "</td>" +
+            "<td>" + formatCurrencyAmount(totals.localTotal, totals.config.currency) + "</td>" +
+            "<td>" + reimbText + "</td>" +
+            "<td>" + (data.destination || "") + "</td>" +
+            "<td>" + (data.description || "") + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "naturalAccount", 5) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "analysis", 9) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "budgetHolder", 6) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "costCentre", 5) + "</td>" +
+            "<td>" + buildAllocInput(lineKey, "fundSource", 3) + "</td>" +
+            "<td class=\"center\">01</td>" +
+            "<td></td>" +
+            "<td></td>";
+
+          body.appendChild(row);
+        });
+
+        wireAllocInputs();
+      }
+
+      renderRows();
+
+      if (allocSave) {
+        allocSave.addEventListener("click", function () {
+          captureAllocInputs();
+          saveAllocations();
+          window.alert("Save successful.");
+        });
+      }
+
+      if (allocNext) {
+        allocNext.addEventListener("click", function (event) {
+          if (hasUnsavedChanges) {
+            event.preventDefault();
+            window.alert("Please save your changes before continuing.");
+            return;
+          }
+          if (!validateAllocations()) {
+            event.preventDefault();
+          }
+        });
+      }
+
+      if (allocBack) {
+        allocBack.addEventListener("click", function (event) {
+          if (hasUnsavedChanges) {
+            event.preventDefault();
+            window.alert("Please save your changes before leaving this page.");
+          }
+        });
+      }
+
+      var expandLink = document.getElementById("expand-all");
+      var collapseLink = document.getElementById("collapse-all");
+      if (expandLink) {
+        expandLink.addEventListener("click", function (event) {
+          event.preventDefault();
+          isCollapsed = false;
+          renderRows();
+        });
+      }
+      if (collapseLink) {
+        collapseLink.addEventListener("click", function (event) {
+          event.preventDefault();
+          isCollapsed = true;
+          renderRows();
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

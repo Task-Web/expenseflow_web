@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Update Expense Report: Review</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-user="TMCHAN" data-api-base="/api" data-attachments-endpoint="/api/files">
+  <div data-component="topbar"></div>
+
+  <div class="content">
+    <div data-component="wizard" data-step="4"></div>
+
+    <div class="alert">
+      <span class="icon">!</span>
+      <div>
+        <div><strong>Warning</strong></div>
+        <div>You are not a departmental checker. Submission of report is disabled.</div>
+      </div>
+    </div>
+
+    <div class="page-title-row">
+      <div class="page-title">Update Expense Report: Review</div>
+      <div class="page-actions">
+        <button class="btn review-save">Save</button>
+        <a class="btn review-back" href="expense-allocations.html">Back</a>
+        <span>Step 4 of 4</span>
+        <button class="btn review-submit">Submit</button>
+      </div>
+    </div>
+
+    <div class="hint">Review the expense report below before submission.</div>
+
+    <div class="review-section no-top-border">
+      <div class="section-title">Approver Lists:</div>
+      <div class="review-divider"></div>
+      <div class="approver-row">
+        <div class="review-inline">
+          <span class="label">Approver 1:</span>
+          <input class="review-input approver-input" />
+          <button class="input-icon input-icon-btn approver-search" type="button" aria-label="Search approver">
+            <svg class="icon-search" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="review-inline">
+          <span class="label">Approver 2:</span>
+          <input class="review-input approver-input" />
+          <button class="input-icon input-icon-btn approver-search" type="button" aria-label="Search approver">
+            <svg class="icon-search" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="review-inline">
+          <span class="label">Approver 3:</span>
+          <input class="review-input approver-input" />
+          <button class="input-icon input-icon-btn approver-search" type="button" aria-label="Search approver">
+            <svg class="icon-search" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+              <circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
+              <line x1="10.5" y1="10.5" x2="14" y2="14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="review-small">If no approver is selected, the submission will be routed to the department for approver assignment.</div>
+    </div>
+
+    <div class="review-section no-top-border">
+      <div class="section-title">General Information</div>
+      <div class="review-divider"></div>
+      <div class="review-split">
+        <div class="review-table">
+          <div class="review-row"><span class="label">Name</span><span id="review-name">Yu, Tao</span></div>
+          <div class="review-row"><span class="label">Expense Dates</span><span id="review-dates"></span></div>
+          <div class="review-row"><span class="label">Cost Center</span><span id="review-cost-center">14700</span></div>
+          <div class="review-row"><span class="label">Description</span><span id="review-description"></span></div>
+          <div class="review-row">
+            <span class="label">Attachments:</span>
+            <div class="review-attachments-cell">
+              <div class="review-attachments-actions">
+                <span id="attachments-empty">None</span>
+                <button class="mini-btn" id="attachments-add" type="button">Add...</button>
+                <input class="is-hidden" id="attachments-input" type="file" multiple accept=".doc,.docx" />
+              </div>
+              <ul class="review-attachments is-hidden" id="attachments-list"></ul>
+              <div class="review-small review-attachments-error is-hidden" id="attachments-error"></div>
+            </div>
+          </div>
+        </div>
+        <div class="review-table">
+          <div class="review-row"><span class="label">Report Total</span><span id="review-total"></span></div>
+          <div class="review-row"><span class="label">Reimbursement Amount</span><span id="review-reimb"></span></div>
+          <div class="review-row"><span class="label">Expense Template Description</span><span id="review-template-desc"></span></div>
+          <div class="review-row"><span class="label">Budget Amount:</span><span id="review-budget"></span></div>
+        </div>
+      </div>
+
+      <div class="review-note-block">
+        Please note: (1) Login with HKUVPN is required if you are not using HKU Campus Network. Please re-login HKU Portal and reload this page to View or Add file(s).
+        (2) In case you have selected a wrong file and unable to use the [Remove] button to delete it, please either close the page and reload the page to select the correct file for upload OR simply upload the wrong file to the system and then delete it afterwards.
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="section-title">Account Allocations</div>
+      <div class="review-divider"></div>
+      <div class="review-panel">
+        <div class="allocation-expand"><a href="#" id="review-expand-all">Expand All</a> | <a href="#" id="review-collapse-all">Collapse All</a></div>
+        <div class="allocation-scrollwrap">
+          <table class="allocation-table">
+          <thead>
+            <tr>
+              <th style="width: 26px;"></th>
+              <th style="width: 40px;">Focus</th>
+              <th style="width: 50px;">Line</th>
+              <th style="width: 90px;">Payment Method</th>
+              <th style="width: 90px;">Date</th>
+              <th style="width: 230px;">Expense Type</th>
+              <th style="width: 110px;">Receipt Amount</th>
+              <th style="width: 130px;">Reimbursable Amount (HKD)</th>
+              <th style="width: 80px;">Location</th>
+              <th style="width: 100px;">Description</th>
+              <th style="width: 110px;">Natural Account</th>
+              <th style="width: 120px;">Analysis</th>
+              <th style="width: 110px;">Budget Holder</th>
+              <th style="width: 90px;">Cost Centre</th>
+              <th style="width: 90px;">Fund Source</th>
+              <th style="width: 60px;">Entity</th>
+              <th style="width: 90px;">Dept Ref #1</th>
+              <th style="width: 90px;">Dept Ref #2</th>
+            </tr>
+          </thead>
+          <tbody id="review-alloc-body">
+          </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-section">
+      <div class="section-title">Notes</div>
+      <div class="review-divider"></div>
+      <ol class="review-notes">
+        <li>Overseas Travelling must have appropriate work-related justification and is subject to pre-approval by the corresponding Approving Authority (or his/her delegate). Any staff member who makes business trip that has not been properly authorized beforehand could be held personally liable for the costs of the trip.</li>
+        <li>Expenses claims of the trip should be made within 30 days after the trip. The claim should have no material deviation from the approved Overseas Travelling Application, including the original budget estimates of the trip.</li>
+        <li>Official receipt(s) should be scanned and uploaded to the Expense Report, while the original should be sent to Department Checker for review and filing.</li>
+        <li>By submitting this claim, the claimant certifies that the expenses were incurred for carrying out official University business on the date(s) shown within the relevant regulations and policies, the amounts claimed were genuine, correct and have never been charged to the HKU Corporate Credit Card.</li>
+        <li>Please fill in the purpose of the duty trip (e.g. conference / visit / research / training / others (please specify)).</li>
+        <li>If for any non-business or personal reasons that a travelling staff wants to stopover certain destination in a trip, any extra expense from the stopover must be borne by the staff personally.</li>
+        <li>Airfare.</li>
+        <li>All air travels should be made by economy-class flights. Business (or premium-economy) tickets may be considered for flying time over 9 hours (excluding transit hours) but only if there are any special justifications pre-approved by the Approving Authority. No first-class airfare should be taken by any staff of the University.</li>
+        <li>Subsistence allowances.</li>
+        <li>They are fixed amounts payable to the travelling staff to reimburse the basic living costs incurred by the staff during his/her stay outside of Hong Kong. Such costs would include the cost of the appropriate standard of accommodation and meals, laundry charges, casual entertainment, gratuities, travelling expenses within towns and all minor incidental out-of-pocket expenses. Different daily allowance rates are set for different countries or cities with reference to the practice of Hong Kong Government in this regard.</li>
+        <li>Different rates will apply for business travel and overseas training. Department checker is reminded to check if the claimed allowance from the relevant rates of overseas training calculated by the claimant is correct before submission for approval.</li>
+        <li>Where the rates of allowances are not adequate to cover the actual expenses, the Approving Authority may authorize reimbursement of such portion of the actual expenses incurred as he/she considers reasonably economical, having regard to special circumstances of the cases.</li>
+        <li>Other trip specific expenses.</li>
+        <li>The subsistence allowances do not cover other expenses which are specific to a trip, e.g. conference registration fees. The incurrence of any such expenses would need to be pre-approved in the Overseas Travelling Application before the staff may claim for their reimbursement after the trip.</li>
+        <li>The University has taken Group Travel Insurance Policy to cover business travels of staff. Claim for separate travel insurance is therefore not accepted.</li>
+        <li>Proof for applicable exchange rate if the payments are in foreign currencies or else the relevant market rate published by the Hong Kong Association of Banks, where applicable, will be applied for reimbursement purpose.</li>
+        <li>Travel insurance under the University's Group Travel Insurance Policy has already been taken out to cover official travelling activities. Claim for separate travel insurance premium is not payable.</li>
+        <li>The following rates are available from the FEO Intranet homepage for easy reference which will also be updated from time to time:</li>
+        <li>Subsistence allowance for business travel outside Hong Kong; and</li>
+        <li>Subsistence allowance for overseas training.</li>
+      </ol>
+    </div>
+
+    <div class="page-actions" style="margin-top: 10px;">
+      <button class="btn review-save">Save</button>
+      <a class="btn review-back" href="expense-allocations.html">Back</a>
+      <span>Step 4 of 4</span>
+      <button class="btn review-submit">Submit</button>
+    </div>
+
+    <div class="spacer"></div>
+  </div>
+
+  <div class="modal-backdrop" id="approver-modal">
+    <div class="modal-card approver-modal-card" role="dialog" aria-modal="true" aria-labelledby="approver-modal-title">
+      <div class="modal-header" id="approver-modal-title">Search and Select: Approver</div>
+      <div class="modal-controls">
+        <input class="input approver-search-input" id="approver-search" aria-label="Search approver" />
+        <button class="mini-btn" type="button" id="approver-go">Go</button>
+      </div>
+      <div class="approver-list" id="approver-list"></div>
+      <div class="modal-footer">
+        <button class="mini-btn" type="button" id="approver-cancel">Cancel</button>
+        <button class="mini-btn" type="button" id="approver-select" disabled="disabled">Select</button>
+      </div>
+    </div>
+  </div>
+
+  <div data-component="footer"></div>
+
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      var app = window.ExpenseApp;
+      var storage = app ? app.storage : null;
+      var lineUtils = app ? app.lines : null;
+      var format = app ? app.format : null;
+      var perDiemData = app ? app.perDiem : null;
+      var employeeAllocations = app && app.data ? app.data.employeeAllocations : null;
+      var nameEl = document.getElementById("review-name");
+      var datesEl = document.getElementById("review-dates");
+      var costCenterEl = document.getElementById("review-cost-center");
+      var descriptionEl = document.getElementById("review-description");
+      var totalEl = document.getElementById("review-total");
+      var reimbEl = document.getElementById("review-reimb");
+      var templateDescEl = document.getElementById("review-template-desc");
+      var budgetEl = document.getElementById("review-budget");
+      var attachmentsAdd = document.getElementById("attachments-add");
+      var attachmentsInput = document.getElementById("attachments-input");
+      var attachmentsList = document.getElementById("attachments-list");
+      var attachmentsEmpty = document.getElementById("attachments-empty");
+      var attachmentsError = document.getElementById("attachments-error");
+      var body = document.getElementById("review-alloc-body");
+      var isCollapsed = false;
+      var attachmentsEndpoint =
+        document.body.getAttribute("data-attachments-endpoint") ||
+        "/api/files";
+      if (app && app.api && app.api.resolveEndpoint) {
+        attachmentsEndpoint = app.api.resolveEndpoint(attachmentsEndpoint);
+      } else if (attachmentsEndpoint.charAt(0) === "/" && window.location.port === "5173") {
+        attachmentsEndpoint = "http://localhost:8000" + attachmentsEndpoint;
+      }
+      var maxFileSize = 100 * 1024 * 1024;
+      var maxAttachmentCount = 4;
+      var allowedAttachmentExtensions = [".doc", ".docx"];
+      var attachmentsDraftKey = "expenseAttachmentsDraft";
+      var attachmentsCache = [];
+      var allocationEdits = loadAllocations();
+      var approverModal = document.getElementById("approver-modal");
+      var approverSearchInput = document.getElementById("approver-search");
+      var approverList = document.getElementById("approver-list");
+      var approverCancel = document.getElementById("approver-cancel");
+      var approverSelect = document.getElementById("approver-select");
+      var approverGo = document.getElementById("approver-go");
+      var approverSearchButtons = document.querySelectorAll(".approver-search");
+      var approverInputs = document.querySelectorAll(".approver-input");
+      var activeApproverInput = null;
+      var selectedApprover = null;
+      var approverNames = [
+        "Adrian Wong",
+        "Beatrice Lau",
+        "Calvin Yeung",
+        "Daphne Chan",
+        "Evan Leung",
+        "Felicia Tang",
+        "Gerald Ho",
+        "Hazel Ng",
+        "Ivan Cheung",
+        "Jasmine Yip",
+        "Keith Mak",
+        "Linda Tse",
+        "Marcus Lam",
+        "Nora Cheng",
+        "Oscar Poon",
+        "Priscilla Kwok",
+        "Raymond Li",
+        "Sabrina Choi",
+        "Terence Kwan",
+        "Vivian Au"
+      ];
+      var approverSaveButtons = document.querySelectorAll(".review-save");
+      var approverBackButtons = document.querySelectorAll(".review-back");
+      var approverSubmitButtons = document.querySelectorAll(".review-submit");
+      var approverDraftKey = "reviewApproversDraft";
+      var approverDirtyKey = "reviewApproversDirty";
+      var hasUnsavedApproverChanges = localStorage.getItem(approverDirtyKey) === "true";
+      var submittedReportsKey = "submittedExpenseReports";
+      var reportSequenceKey = "submittedReportSequence";
+
+      function getHeader() {
+        if (storage) {
+          return storage.getHeader();
+        }
+        return {};
+      }
+
+      function loadAllocations() {
+        try {
+          var stored = JSON.parse(localStorage.getItem("expenseAllocations") || "{}");
+          if (stored && typeof stored === "object") {
+            return stored;
+          }
+        } catch (error) {
+          return {};
+        }
+        return {};
+      }
+
+      function readJSON(key, fallback) {
+        try {
+          var raw = localStorage.getItem(key);
+          if (!raw) {
+            return fallback;
+          }
+          return JSON.parse(raw);
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function updateAttachmentActions() {
+        if (!attachmentsAdd) {
+          return;
+        }
+        var atLimit =
+          Number.isFinite(maxAttachmentCount) &&
+          maxAttachmentCount > 0 &&
+          attachmentsCache.length >= maxAttachmentCount;
+        attachmentsAdd.disabled = atLimit;
+        if (atLimit) {
+          attachmentsAdd.setAttribute(
+            "title",
+            "Maximum of " + maxAttachmentCount + " Word files reached."
+          );
+        } else {
+          attachmentsAdd.removeAttribute("title");
+        }
+      }
+
+      function getAttachmentDraft() {
+        var stored = readJSON(attachmentsDraftKey, []);
+        return Array.isArray(stored) ? stored : [];
+      }
+
+      function setAttachmentDraft(items) {
+        attachmentsCache = Array.isArray(items) ? items : [];
+        localStorage.setItem(attachmentsDraftKey, JSON.stringify(attachmentsCache));
+        updateAttachmentActions();
+      }
+
+      function buildApproverDraft() {
+        var values = [];
+        if (!approverInputs || !approverInputs.length) {
+          return values;
+        }
+        Array.prototype.slice.call(approverInputs).forEach(function (input) {
+          values.push(input.value || "");
+        });
+        return values;
+      }
+
+      function getApproverDraft() {
+        return readJSON(approverDraftKey, []);
+      }
+
+      function applyApproverDraft() {
+        if (!approverInputs || !approverInputs.length) {
+          return;
+        }
+        var values = getApproverDraft();
+        Array.prototype.slice.call(approverInputs).forEach(function (input, index) {
+          if (values[index]) {
+            input.value = values[index];
+          }
+        });
+      }
+
+      function markApproverDirty() {
+        hasUnsavedApproverChanges = true;
+        localStorage.setItem(approverDirtyKey, "true");
+      }
+
+      function markApproverSaved() {
+        hasUnsavedApproverChanges = false;
+        localStorage.setItem(approverDirtyKey, "false");
+      }
+
+      function saveApproverDraft(markDirtyFlag) {
+        localStorage.setItem(approverDraftKey, JSON.stringify(buildApproverDraft()));
+        if (markDirtyFlag !== false) {
+          markApproverDirty();
+        }
+      }
+
+      function commitApprovers() {
+        localStorage.setItem("reviewApprovers", JSON.stringify(buildApproverDraft()));
+        saveApproverDraft(false);
+        markApproverSaved();
+      }
+
+      function getAllocValue(lineKey, field) {
+        var stored = allocationEdits[lineKey] || {};
+        if (Object.prototype.hasOwnProperty.call(stored, field)) {
+          return stored[field];
+        }
+        return "";
+      }
+
+      function renderApproverList(query) {
+        if (!approverList) {
+          return;
+        }
+        var normalized = String(query || "").toLowerCase();
+        var matches = approverNames.filter(function (name) {
+          return name.toLowerCase().indexOf(normalized) > -1;
+        });
+        approverList.innerHTML = "";
+        selectedApprover = null;
+        if (approverSelect) {
+          approverSelect.disabled = true;
+        }
+        if (!matches.length) {
+          var empty = document.createElement("div");
+          empty.className = "approver-empty";
+          empty.textContent = "No items were found matching your request.";
+          approverList.appendChild(empty);
+          return;
+        }
+        matches.forEach(function (name) {
+          var item = document.createElement("button");
+          item.type = "button";
+          item.className = "approver-item";
+          item.textContent = name;
+          item.addEventListener("click", function () {
+            selectedApprover = name;
+            if (approverList) {
+              approverList.querySelectorAll(".approver-item").forEach(function (node) {
+                node.classList.remove("is-selected");
+              });
+            }
+            item.classList.add("is-selected");
+            if (approverSelect) {
+              approverSelect.disabled = false;
+            }
+          });
+          approverList.appendChild(item);
+        });
+      }
+
+      function openApproverModal(input) {
+        if (!approverModal) {
+          return;
+        }
+        activeApproverInput = input || null;
+        if (approverSearchInput) {
+          approverSearchInput.value = "";
+        }
+        renderApproverList("");
+        approverModal.classList.add("open");
+        if (approverSearchInput) {
+          approverSearchInput.focus();
+        }
+      }
+
+      function closeApproverModal() {
+        if (approverModal) {
+          approverModal.classList.remove("open");
+        }
+        activeApproverInput = null;
+        selectedApprover = null;
+      }
+
+      function getStoredLines() {
+        if (storage) {
+          return storage.getLines();
+        }
+        return {};
+      }
+
+      function formatFileSize(bytes) {
+        if (!Number.isFinite(bytes)) {
+          return "";
+        }
+        if (bytes < 1024) {
+          return bytes + " B";
+        }
+        if (bytes < 1024 * 1024) {
+          return (bytes / 1024).toFixed(1) + " KB";
+        }
+        return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+      }
+
+      function resolveFileUrl(url) {
+        if (!url) {
+          return "";
+        }
+        if (/^(https?:|data:|blob:)/i.test(url)) {
+          return url;
+        }
+        var origin = window.location.origin;
+        try {
+          origin = new URL(attachmentsEndpoint, window.location.href).origin;
+        } catch (error) {
+          origin = window.location.origin;
+        }
+        if (url.charAt(0) === "/") {
+          return origin + url;
+        }
+        return origin + "/" + url;
+      }
+
+      function showAttachmentError(message) {
+        if (!attachmentsError) {
+          return;
+        }
+        attachmentsError.textContent = message || "";
+        attachmentsError.classList.toggle("is-hidden", !message);
+      }
+
+      function renderAttachments(items) {
+        if (!attachmentsList || !attachmentsEmpty) {
+          return;
+        }
+        var list = items || [];
+        setAttachmentDraft(list);
+        attachmentsList.innerHTML = "";
+        if (!list.length) {
+          attachmentsEmpty.classList.remove("is-hidden");
+          attachmentsList.classList.add("is-hidden");
+          return;
+        }
+
+        attachmentsEmpty.classList.add("is-hidden");
+        attachmentsList.classList.remove("is-hidden");
+        list.forEach(function (item) {
+          var li = document.createElement("li");
+          var name = item.name || item.filename || "attachment";
+          var url = resolveFileUrl(item.url || item.content_base64 || "");
+          if (url) {
+            var link = document.createElement("a");
+            link.href = url;
+            link.download = name;
+            link.textContent = name;
+            li.appendChild(link);
+          } else {
+            li.textContent = name;
+          }
+          var sizeText = formatFileSize(item.size);
+          if (sizeText) {
+            var sizeSpan = document.createElement("span");
+            sizeSpan.className = "review-small";
+            sizeSpan.textContent = " (" + sizeText + ")";
+            li.appendChild(sizeSpan);
+          }
+          var removeBtn = document.createElement("button");
+          removeBtn.type = "button";
+          removeBtn.className = "mini-btn attachment-remove";
+          removeBtn.textContent = "Remove";
+          removeBtn.addEventListener("click", function () {
+            removeAttachment(item);
+          });
+          li.appendChild(removeBtn);
+          attachmentsList.appendChild(li);
+        });
+      }
+
+      function mergeAttachments(existing, incoming) {
+        var seen = {};
+        var merged = [];
+        (existing || []).forEach(function (item) {
+          if (!item) {
+            return;
+          }
+          var key = item.id || item.filename || item.url || item.name;
+          if (key && !seen[key]) {
+            seen[key] = true;
+            merged.push(item);
+          }
+        });
+        (incoming || []).forEach(function (item) {
+          if (!item) {
+            return;
+          }
+          var key = item.id || item.filename || item.url || item.name;
+          if (key && !seen[key]) {
+            seen[key] = true;
+            merged.push(item);
+          }
+        });
+        return merged;
+      }
+
+      function fetchAttachments(clearError) {
+        return fetch(attachmentsEndpoint, { method: "GET", credentials: "include" })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Attachment service unavailable.");
+            }
+            return response.json();
+          })
+          .then(function (items) {
+            renderAttachments(items);
+            if (clearError) {
+              showAttachmentError("");
+            }
+            return items;
+          })
+          .catch(function () {
+            renderAttachments(attachmentsCache);
+            showAttachmentError("Unable to load attachments from server.");
+            return [];
+          });
+      }
+
+      function extractErrorMessage(response, fallback) {
+        if (!response) {
+          return Promise.resolve(fallback);
+        }
+        return response
+          .json()
+          .then(function (payload) {
+            if (payload && (payload.detail || payload.error || payload.message)) {
+              return payload.detail || payload.error || payload.message;
+            }
+            return fallback;
+          })
+          .catch(function () {
+            return fallback;
+          });
+      }
+
+      function uploadAttachment(file, onDone) {
+        var formData = new FormData();
+        formData.append("files", file);
+        fetch(attachmentsEndpoint, {
+          method: "POST",
+          credentials: "include",
+          body: formData
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              return extractErrorMessage(response, "Upload failed.").then(function (message) {
+                throw new Error(message);
+              });
+            }
+            return response.json();
+          })
+          .then(function (items) {
+            onDone(null, items);
+          })
+          .catch(function (error) {
+            onDone(error && error.message ? error.message : "Upload failed.");
+          });
+      }
+
+      function deleteAttachment(item, onDone) {
+        if (!item || !item.filename) {
+          onDone(null);
+          return;
+        }
+        var deleteUrl = attachmentsEndpoint.replace(/\/$/, "") +
+          "/" +
+          encodeURIComponent(item.filename);
+        fetch(deleteUrl, {
+          method: "DELETE",
+          credentials: "include"
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("Delete failed.");
+            }
+            onDone(null);
+          })
+          .catch(function () {
+            onDone("failed");
+          });
+      }
+
+      function removeAttachment(item) {
+        if (!item) {
+          return;
+        }
+        showAttachmentError("");
+        deleteAttachment(item, function (error) {
+          if (error) {
+            showAttachmentError("Unable to remove attachment.");
+            return;
+          }
+          var removeKey = item.id || item.filename || item.url || item.name;
+          var nextItems = (attachmentsCache || []).filter(function (existing) {
+            if (!existing) {
+              return false;
+            }
+            var key = existing.id || existing.filename || existing.url || existing.name;
+            return key !== removeKey;
+          });
+          renderAttachments(nextItems);
+        });
+      }
+
+      function handleAttachmentFiles(files) {
+        var errors = [];
+        var pending = 0;
+        var nextItems = attachmentsCache.slice();
+        var selected = Array.prototype.slice.call(files || []);
+
+        function isAllowedAttachment(file) {
+          if (!file || !file.name) {
+            return false;
+          }
+          var name = file.name.toLowerCase();
+          return allowedAttachmentExtensions.some(function (ext) {
+            return name.slice(-ext.length) === ext;
+          });
+        }
+
+        var invalidFiles = selected.filter(function (file) {
+          return !isAllowedAttachment(file);
+        });
+        invalidFiles.forEach(function (file) {
+          errors.push((file && file.name ? file.name : "File") + " must be a Word document (.doc or .docx).");
+        });
+
+        var validFiles = selected.filter(isAllowedAttachment);
+        var remaining = maxAttachmentCount;
+        if (Number.isFinite(maxAttachmentCount) && maxAttachmentCount > 0) {
+          remaining = maxAttachmentCount - attachmentsCache.length;
+          if (remaining <= 0) {
+            showAttachmentError("Maximum of " + maxAttachmentCount + " Word files reached.");
+            return;
+          }
+          if (validFiles.length > remaining) {
+            showAttachmentError("You can upload only " + remaining + " more Word file(s).");
+            return;
+          }
+        }
+        if (!validFiles.length) {
+          showAttachmentError(errors.join(" "));
+          return;
+        }
+
+        function done() {
+          if (pending > 0) {
+            return;
+          }
+          showAttachmentError(errors.join(" "));
+          renderAttachments(nextItems);
+        }
+
+        validFiles.forEach(function (file) {
+          if (file.size > maxFileSize) {
+            errors.push(file.name + " exceeds the 100 MB limit.");
+            return;
+          }
+          pending += 1;
+          uploadAttachment(file, function (error, items) {
+            if (error) {
+              errors.push(file.name + ": " + error);
+            } else {
+              nextItems = mergeAttachments(nextItems, items);
+            }
+            pending -= 1;
+            done();
+          });
+        });
+
+        if (pending === 0) {
+          showAttachmentError(errors.join(" "));
+        }
+      }
+
+      function getPerDiemLines() {
+        if (storage && storage.getPerDiemLines) {
+          return storage.getPerDiemLines();
+        }
+        try {
+          return JSON.parse(localStorage.getItem("perDiemLines") || "{}");
+        } catch (error) {
+          return {};
+        }
+      }
+
+      function lineHasData(lineData) {
+        if (lineUtils) {
+          return lineUtils.hasData(lineData);
+        }
+        return Boolean(
+          lineData &&
+            (lineData.receiptDate ||
+              lineData.receiptAmount ||
+              lineData.expenseType ||
+              lineData.description ||
+              lineData.reimbAmount ||
+              lineData.receiptCurrency ||
+              lineData.exchangeRate)
+        );
+      }
+
+      function perDiemLineHasData(lineData) {
+        if (!lineData) {
+          return false;
+        }
+        return Boolean(
+          lineData.expenseType ||
+            lineData.startDate ||
+            lineData.endDate ||
+            lineData.destination ||
+            lineData.description ||
+            lineData.nights ||
+            lineData.reimbAmount
+        );
+      }
+
+      function formatReceiptAmount(lineData) {
+        if (format) {
+          return format.formatReceiptAmount(lineData);
+        }
+        if (!lineData || !lineData.receiptAmount) {
+          return "";
+        }
+        var currency = lineData.receiptCurrency || "HKD";
+        return lineData.receiptAmount + " " + currency;
+      }
+
+      function formatReimbAmount(lineData) {
+        if (format) {
+          return format.formatReimbAmount(lineData);
+        }
+        if (!lineData) {
+          return "";
+        }
+        if (lineData.reimbAmount) {
+          return lineData.reimbAmount;
+        }
+        return lineData.receiptAmount ? lineData.receiptAmount : "";
+      }
+
+      function resolvePerDiemConfig(destinationValue) {
+        if (perDiemData && perDiemData.resolve) {
+          return perDiemData.resolve(destinationValue);
+        }
+        return { currency: "HKD", amount: 0, rate: 1 };
+      }
+
+      function formatAmount(value) {
+        return Number.isFinite(value) ? value.toFixed(2) : "";
+      }
+
+      function formatCurrencyAmount(amount, currency) {
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return "";
+        }
+        return formatAmount(amount) + " " + currency;
+      }
+
+      function parseCount(value) {
+        var parsed = parseInt(value, 10);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function getPerDiemTotals(lineData) {
+        var config = resolvePerDiemConfig(lineData.destination || "");
+        var nightsCount = parseCount(lineData.nights);
+        var localTotal = nightsCount > 0 ? config.amount * nightsCount : 0;
+        var reimbTotal = parseAmount(lineData.reimbAmount);
+        if (!reimbTotal && localTotal) {
+          reimbTotal = localTotal * config.rate;
+        }
+        return {
+          config: config,
+          localTotal: localTotal,
+          reimbTotal: reimbTotal
+        };
+      }
+
+      function parseAmount(value) {
+        if (format) {
+          return format.parseAmount(value);
+        }
+        if (!value) {
+          return 0;
+        }
+        var cleaned = String(value).replace(/[^0-9.]/g, "");
+        var parsed = parseFloat(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function formatSubmitDate(date) {
+        if (!date) {
+          return "";
+        }
+        var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+        var day = String(date.getDate()).padStart(2, "0");
+        var month = months[date.getMonth()];
+        return day + "-" + month + "-" + date.getFullYear();
+      }
+
+      function getSequenceForDate(date) {
+        var month = String(date.getMonth() + 1).padStart(2, "0");
+        var day = String(date.getDate()).padStart(2, "0");
+        var key = date.getFullYear() + month + day;
+        var stored = readJSON(reportSequenceKey, {});
+        var next = 1;
+        if (stored && stored.dateKey === key) {
+          var parsed = parseInt(stored.seq, 10);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            next = parsed + 1;
+          }
+        }
+        localStorage.setItem(reportSequenceKey, JSON.stringify({ dateKey: key, seq: next }));
+        return next;
+      }
+
+      function getReportNumber(date) {
+        var month = String(date.getMonth() + 1).padStart(2, "0");
+        var day = String(date.getDate()).padStart(2, "0");
+        var sequence = String(getSequenceForDate(date)).padStart(3, "0");
+        return "ER-" + date.getFullYear() + "-" + month + day + "-" + sequence;
+      }
+
+      function normalizeEmployeeNumber(value) {
+        var digits = String(value || "").replace(/\D/g, "");
+        if (!digits) {
+          return "";
+        }
+        if (digits.length >= 8) {
+          return digits.slice(-8);
+        }
+        return ("00000000" + digits).slice(-8);
+      }
+
+      function getEmployeeNumber(header) {
+        if (header && header.employeeNumber) {
+          return normalizeEmployeeNumber(header.employeeNumber);
+        }
+        if (
+          employeeAllocations &&
+          header &&
+          header.employeeName &&
+          employeeAllocations[header.employeeName] &&
+          employeeAllocations[header.employeeName].budgetHolder
+        ) {
+          return normalizeEmployeeNumber(employeeAllocations[header.employeeName].budgetHolder);
+        }
+        return "";
+      }
+
+      function getCurrentApprover() {
+        var approvers = readJSON("reviewApprovers", []);
+        if (Array.isArray(approvers)) {
+          for (var i = 0; i < approvers.length; i += 1) {
+            var value = String(approvers[i] || "").trim();
+            if (value) {
+              return value;
+            }
+          }
+        }
+        return "Department Checker";
+      }
+
+      function calculateReportTotal() {
+        var lines = getStoredLines();
+        var perDiemLines = getPerDiemLines();
+        var keys = Object.keys(lines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && lineHasData(lines[String(key)]);
+          });
+        var perDiemKeys = Object.keys(perDiemLines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && perDiemLineHasData(perDiemLines[String(key)]);
+          });
+        var total = 0;
+        keys.forEach(function (key) {
+          var data = lines[String(key)] || {};
+          total += parseAmount(formatReimbAmount(data));
+        });
+        perDiemKeys.forEach(function (key) {
+          var data = perDiemLines[String(key)] || {};
+          var totals = getPerDiemTotals(data);
+          total += totals.reimbTotal || 0;
+        });
+        return total;
+      }
+
+      function getSubmittedReports() {
+        var stored = readJSON(submittedReportsKey, []);
+        return Array.isArray(stored) ? stored : [];
+      }
+
+      function saveSubmittedReport(report) {
+        if (!report || !report.reportNumber) {
+          return;
+        }
+        var reports = getSubmittedReports();
+        var exists = reports.some(function (item) {
+          return item && item.reportNumber === report.reportNumber;
+        });
+        if (!exists) {
+          reports.unshift(report);
+          localStorage.setItem(submittedReportsKey, JSON.stringify(reports));
+        }
+      }
+
+      function getReportApprovers() {
+        var approvers = readJSON("reviewApprovers", []);
+        return Array.isArray(approvers) ? approvers : [];
+      }
+
+      function getExpenseDateRange(lines, perDiemLines) {
+        var dates = [];
+        Object.keys(lines || {}).forEach(function (key) {
+          var data = lines[key] || {};
+          if (lineHasData(data) && data.receiptDate) {
+            dates.push(data.receiptDate);
+          }
+        });
+        Object.keys(perDiemLines || {}).forEach(function (key) {
+          var data = perDiemLines[key] || {};
+          if (!perDiemLineHasData(data)) {
+            return;
+          }
+          if (data.startDate) {
+            dates.push(data.startDate);
+          }
+          if (data.endDate) {
+            dates.push(data.endDate);
+          }
+        });
+        return formatRange(dates);
+      }
+
+      function clearCurrentReportData() {
+        [
+          "expenseHeader",
+          "expenseHeaderDraft",
+          "expenseHeaderDirty",
+          attachmentsDraftKey,
+          "expenseLines",
+          "expenseLinesDraft",
+          "perDiemLines",
+          "perDiemLinesDraft",
+          "expenseAllocations",
+          "expenseTargetLine",
+          "perDiemTargetLine",
+          "cashExpensesDirty",
+          "reviewApprovers",
+          "reviewApproversDraft",
+          "reviewApproversDirty"
+        ].forEach(function (key) {
+          localStorage.removeItem(key);
+        });
+      }
+
+      function handleSubmit() {
+        var header = getHeader();
+        var now = new Date();
+        var reportTotal = calculateReportTotal();
+        var linesSnapshot = getStoredLines();
+        var perDiemSnapshot = getPerDiemLines();
+        var report = {
+          reportNumber: getReportNumber(now),
+          submitDate: formatSubmitDate(now),
+          costCenter: header.costCenter || "",
+          employeeNumber: getEmployeeNumber(header),
+          employeeName: header.employeeName || "",
+          lastUpdateDate: formatSubmitDate(now),
+          currentApprover: getCurrentApprover(),
+          reportTotal: Number.isFinite(reportTotal) ? reportTotal : 0,
+          purpose: header.expenseDescription || ""
+        };
+        report.header = header;
+        report.lines = linesSnapshot;
+        report.perDiemLines = perDiemSnapshot;
+        report.allocations = allocationEdits;
+        report.approvers = getReportApprovers();
+        report.expenseDates = getExpenseDateRange(linesSnapshot, perDiemSnapshot);
+        report.template = header.template || "";
+        report.templateDesc = header.templateDesc || "";
+        report.budgetAmount = header.budgetAmount || "";
+        report.attachments = attachmentsCache.slice();
+        saveSubmittedReport(report);
+        clearCurrentReportData();
+        window.location.href = "index.html";
+      }
+
+      function formatRange(dates) {
+        if (format) {
+          return format.formatDateRange(dates);
+        }
+        if (!dates.length) {
+          return "";
+        }
+        dates.sort();
+        var first = dates[0];
+        var last = dates[dates.length - 1];
+        return first === last ? first : first + " - " + last;
+      }
+
+      function renderRows() {
+        var header = getHeader();
+        var lines = getStoredLines();
+        var perDiemLines = getPerDiemLines();
+        var keys = Object.keys(lines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && lineHasData(lines[String(key)]);
+          })
+          .sort(function (a, b) {
+            return a - b;
+          });
+        var perDiemKeys = Object.keys(perDiemLines)
+          .map(function (key) {
+            return parseInt(key, 10);
+          })
+          .filter(function (key) {
+            return Number.isFinite(key) && perDiemLineHasData(perDiemLines[String(key)]);
+          })
+          .sort(function (a, b) {
+            return a - b;
+          });
+
+        body.innerHTML = "";
+        var total = 0;
+        var dates = [];
+        keys.forEach(function (key) {
+          var data = lines[String(key)] || {};
+          total += parseAmount(formatReimbAmount(data));
+          if (data.receiptDate) {
+            dates.push(data.receiptDate);
+          }
+        });
+        perDiemKeys.forEach(function (key) {
+          var data = perDiemLines[String(key)] || {};
+          var totals = getPerDiemTotals(data);
+          total += totals.reimbTotal || 0;
+          if (data.startDate) {
+            dates.push(data.startDate);
+          }
+        });
+
+        var markerRow = document.createElement("tr");
+        markerRow.className = "alloc-marker-row";
+        markerRow.innerHTML =
+          "<td class=\\\"alloc-marker-cell\\\" colspan=\\\"18\\\">" +
+          "<span class=\\\"alloc-marker\\\"></span>" +
+          "</td>";
+        body.appendChild(markerRow);
+
+        var hasLines = keys.length || perDiemKeys.length;
+        var totalRow = document.createElement("tr");
+        totalRow.className = "alloc-total-row";
+        totalRow.innerHTML =
+          "<td class=\\\"center\\\"><span class=\\\"alloc-check\\\"></span></td>" +
+          "<td class=\\\"center\\\"></td>" +
+          "<td class=\\\"center\\\"><span class=\\\"alloc-arrow\\\"></span>All</td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td>" + (hasLines ? total.toFixed(2) : "") + "</td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>" +
+          "<td></td>";
+        body.appendChild(totalRow);
+
+        if (isCollapsed) {
+          return;
+        }
+
+        keys.forEach(function (key) {
+          var data = lines[String(key)] || {};
+          var row = document.createElement("tr");
+          var lineKey = String(key);
+
+          row.innerHTML =
+            "<td class=\\\"center\\\"><span class=\\\"alloc-check\\\"></span></td>" +
+            "<td class=\\\"center\\\"></td>" +
+            "<td class=\\\"center\\\">" + key + "</td>" +
+            "<td>Cash Receipt</td>" +
+            "<td>" + (data.receiptDate || "") + "</td>" +
+            "<td>" + (data.expenseType || "") + "</td>" +
+            "<td>" + formatReceiptAmount(data) + "</td>" +
+            "<td>" + formatReimbAmount(data) + "</td>" +
+            "<td></td>" +
+            "<td>" + (data.description || "") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "naturalAccount") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "analysis") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "budgetHolder") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "costCentre") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "fundSource") + "</td>" +
+            "<td>01</td>" +
+            "<td></td>" +
+            "<td></td>";
+
+          body.appendChild(row);
+        });
+
+        var lineOffset = keys.length ? Math.max.apply(null, keys) : 0;
+        perDiemKeys.forEach(function (key, index) {
+          var data = perDiemLines[String(key)] || {};
+          var totals = getPerDiemTotals(data);
+          var lineNumber = lineOffset + index + 1;
+          var reimbText = totals.reimbTotal ? formatAmount(totals.reimbTotal) : "";
+          var row = document.createElement("tr");
+          var lineKey = String(lineNumber);
+
+          row.innerHTML =
+            "<td class=\\\"center\\\"><span class=\\\"alloc-check\\\"></span></td>" +
+            "<td class=\\\"center\\\"></td>" +
+            "<td class=\\\"center\\\">" + lineNumber + "</td>" +
+            "<td>Per Diem</td>" +
+            "<td>" + (data.startDate || "") + "</td>" +
+            "<td>" + (data.expenseType || "") + "</td>" +
+            "<td>" + formatCurrencyAmount(totals.localTotal, totals.config.currency) + "</td>" +
+            "<td>" + reimbText + "</td>" +
+            "<td>" + (data.destination || "") + "</td>" +
+            "<td>" + (data.description || "") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "naturalAccount") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "analysis") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "budgetHolder") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "costCentre") + "</td>" +
+            "<td>" + getAllocValue(lineKey, "fundSource") + "</td>" +
+            "<td>01</td>" +
+            "<td></td>" +
+            "<td></td>";
+
+          body.appendChild(row);
+        });
+
+        if (nameEl && header.employeeName) {
+          nameEl.textContent = header.employeeName;
+        }
+        if (costCenterEl && header.costCenter) {
+          costCenterEl.textContent = header.costCenter;
+        }
+        if (descriptionEl && header.expenseDescription) {
+          descriptionEl.textContent = header.expenseDescription;
+        }
+        if (templateDescEl && header.templateDesc) {
+          templateDescEl.textContent = header.templateDesc;
+        }
+        if (budgetEl && header.budgetAmount) {
+          budgetEl.textContent = header.budgetAmount;
+        }
+
+        if (datesEl) {
+          datesEl.textContent = formatRange(dates);
+        }
+        if (totalEl) {
+          totalEl.textContent = hasLines ? total.toFixed(2) + " HKD" : "";
+        }
+        if (reimbEl) {
+          reimbEl.textContent = hasLines ? total.toFixed(2) + " HKD" : "";
+        }
+      }
+
+      if (approverSearchButtons && approverSearchButtons.length) {
+        Array.prototype.slice.call(approverSearchButtons).forEach(function (button, index) {
+          button.addEventListener("click", function () {
+            var input = approverInputs && approverInputs[index] ? approverInputs[index] : null;
+            openApproverModal(input);
+          });
+        });
+      }
+
+      if (approverInputs && approverInputs.length) {
+        Array.prototype.slice.call(approverInputs).forEach(function (input) {
+          input.addEventListener("input", function () {
+            saveApproverDraft();
+          });
+          input.addEventListener("change", function () {
+            saveApproverDraft();
+          });
+        });
+      }
+
+      if (approverSearchInput) {
+        approverSearchInput.addEventListener("input", function () {
+          renderApproverList(approverSearchInput.value);
+        });
+        approverSearchInput.addEventListener("keydown", function (event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            renderApproverList(approverSearchInput.value);
+          }
+          if (event.key === "Escape") {
+            closeApproverModal();
+          }
+        });
+      }
+
+      if (approverGo) {
+        approverGo.addEventListener("click", function () {
+          renderApproverList(approverSearchInput ? approverSearchInput.value : "");
+        });
+      }
+
+      if (approverCancel) {
+        approverCancel.addEventListener("click", closeApproverModal);
+      }
+
+      if (approverSelect) {
+        approverSelect.addEventListener("click", function () {
+          if (!selectedApprover || !activeApproverInput) {
+            return;
+          }
+          activeApproverInput.value = selectedApprover;
+          saveApproverDraft();
+          closeApproverModal();
+        });
+      }
+
+      if (approverModal) {
+        approverModal.addEventListener("click", function (event) {
+          if (event.target === approverModal) {
+            closeApproverModal();
+          }
+        });
+      }
+
+      if (approverSaveButtons && approverSaveButtons.length) {
+        Array.prototype.slice.call(approverSaveButtons).forEach(function (button) {
+          button.addEventListener("click", function () {
+            commitApprovers();
+            window.alert("Save successful.");
+          });
+        });
+      }
+
+      if (approverBackButtons && approverBackButtons.length) {
+        Array.prototype.slice.call(approverBackButtons).forEach(function (link) {
+          link.addEventListener("click", function (event) {
+            if (hasUnsavedApproverChanges) {
+              event.preventDefault();
+              window.alert("Please save your changes before leaving this page.");
+            }
+          });
+        });
+      }
+
+      if (approverSubmitButtons && approverSubmitButtons.length) {
+        Array.prototype.slice.call(approverSubmitButtons).forEach(function (button) {
+          button.addEventListener("click", function (event) {
+            event.preventDefault();
+            if (hasUnsavedApproverChanges) {
+              window.alert("Please save your changes before submitting.");
+              return;
+            }
+            if (!attachmentsCache || !attachmentsCache.length) {
+              window.alert("Error: No proof attachment uploaded. Unable to submit.");
+              return;
+            }
+            handleSubmit();
+          });
+        });
+      }
+
+      applyApproverDraft();
+      renderRows();
+
+      renderAttachments(getAttachmentDraft());
+      fetchAttachments(true);
+
+      if (attachmentsAdd && attachmentsInput) {
+        attachmentsAdd.addEventListener("click", function () {
+          showAttachmentError("");
+          attachmentsInput.value = "";
+          attachmentsInput.click();
+        });
+        attachmentsInput.addEventListener("change", function () {
+          handleAttachmentFiles(attachmentsInput.files);
+        });
+      }
+
+      var expandLink = document.getElementById("review-expand-all");
+      var collapseLink = document.getElementById("review-collapse-all");
+      if (expandLink) {
+        expandLink.addEventListener("click", function (event) {
+          event.preventDefault();
+          isCollapsed = false;
+          renderRows();
+        });
+      }
+      if (collapseLink) {
+        collapseLink.addEventListener("click", function (event) {
+          event.preventDefault();
+          isCollapsed = true;
+          renderRows();
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
