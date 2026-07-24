@@ -50,30 +50,42 @@ function normalizeReports(reports) {
   });
 }
 
-function buildStatePatch(reports) {
-  return {
-    expenseflow: {
-      submitted_expense_reports: normalizeReports(reports),
-    },
-  };
-}
+let lastReportsByNumber = {};
 
-function syncSubmittedReports(reports, note) {
+function syncSubmittedReports(reports) {
   if (typeof fetch !== "function") {
     return Promise.resolve(null);
   }
-  const payload = {
-    data: buildStatePatch(reports),
-    note:
-      note ||
-      "Sync submitted expense reports from ExpenseFlow UI.",
-  };
-  return fetch(`${resolveApiBase()}/state`, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).catch(() => null);
+  const current = Object.fromEntries(
+    normalizeReports(reports).map((report) => [report.reportNumber, report])
+  );
+  const requests = [];
+  Object.values(current).forEach((report) => {
+    if (JSON.stringify(report) === JSON.stringify(lastReportsByNumber[report.reportNumber])) {
+      return;
+    }
+    const reportPayload = {
+      ...report,
+      attachments: (Array.isArray(report.attachments) ? report.attachments : [])
+        .filter((item) => item && item.id && item.filename)
+        .map((item) => ({ id: item.id, filename: item.filename })),
+    };
+    requests.push(fetch(`${resolveApiBase()}/expenseflow/reports`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(reportPayload),
+    }));
+  });
+  Object.keys(lastReportsByNumber).forEach((reportNumber) => {
+    if (current[reportNumber]) return;
+    requests.push(fetch(
+      `${resolveApiBase()}/expenseflow/reports/${encodeURIComponent(reportNumber)}`,
+      { method: "DELETE", credentials: "include" }
+    ));
+  });
+  lastReportsByNumber = current;
+  return Promise.all(requests).catch(() => null);
 }
 
 if (typeof window !== "undefined") {
@@ -81,7 +93,6 @@ if (typeof window !== "undefined") {
     DEFAULT_REPORT_NUMBER,
     resolveApiBase,
     normalizeReports,
-    buildStatePatch,
     syncSubmittedReports,
   };
 }
@@ -90,6 +101,5 @@ export {
   DEFAULT_REPORT_NUMBER,
   resolveApiBase,
   normalizeReports,
-  buildStatePatch,
   syncSubmittedReports,
 };

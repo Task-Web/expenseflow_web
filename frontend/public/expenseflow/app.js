@@ -928,7 +928,6 @@
     var syncDelay = 600;
     var syncTimer = null;
     var lastSnapshot = null;
-    var lastPayload = null;
 
     function parseStorageValue(key, raw) {
       if (!expenseflowJsonKeys[key]) {
@@ -966,27 +965,130 @@
       });
     }
 
-    function buildPatch(snapshot) {
-      var localPatch = {};
-      Object.keys(snapshot).forEach(function (key) {
-        localPatch[key] = snapshot[key];
-      });
-      if (lastSnapshot) {
-        Object.keys(lastSnapshot).forEach(function (key) {
-          if (!Object.prototype.hasOwnProperty.call(snapshot, key)) {
-            localPatch[key] = null;
-          }
-        });
-      }
-
-      return {
-        expenseflow: {
-          local_storage: localPatch,
-          submitted_expense_reports: normalizeSubmittedReports(
-            snapshot.submittedExpenseReports
-          )
-        }
+    function sendRequest(path, method, body, useKeepalive) {
+      var options = {
+        method: method,
+        credentials: "include",
+        keepalive: Boolean(useKeepalive)
       };
+      if (body !== undefined) {
+        options.headers = { "Content-Type": "application/json" };
+        options.body = JSON.stringify(body);
+      }
+      return fetch(resolveApiEndpoint(path), options).catch(function () {});
+    }
+
+    function valuesDiffer(left, right) {
+      return JSON.stringify(left) !== JSON.stringify(right);
+    }
+
+    function syncSingle(path, current, previous, useKeepalive) {
+      if (!valuesDiffer(current, previous)) {
+        return;
+      }
+      if (current === undefined) {
+        sendRequest(path, "DELETE", undefined, useKeepalive);
+      } else {
+        sendRequest(path, "PUT", current, useKeepalive);
+      }
+    }
+
+    function syncRecordMap(path, current, previous, useKeepalive) {
+      var currentMap = current && typeof current === "object" ? current : {};
+      var previousMap = previous && typeof previous === "object" ? previous : {};
+      var keys = {};
+      Object.keys(currentMap).forEach(function (key) { keys[key] = true; });
+      Object.keys(previousMap).forEach(function (key) { keys[key] = true; });
+      Object.keys(keys).forEach(function (key) {
+        syncSingle(path + "/" + encodeURIComponent(key), currentMap[key], previousMap[key], useKeepalive);
+      });
+    }
+
+    function syncIndexedList(path, current, previous, useKeepalive) {
+      var currentList = Array.isArray(current) ? current : [];
+      var previousList = Array.isArray(previous) ? previous : [];
+      var count = Math.max(currentList.length, previousList.length);
+      for (var index = 0; index < count; index += 1) {
+        var currentValue = currentList[index];
+        var previousValue = previousList[index];
+        syncSingle(
+          path + "/" + index,
+          currentValue === undefined ? undefined : { name: currentValue },
+          previousValue === undefined ? undefined : { name: previousValue },
+          useKeepalive
+        );
+      }
+    }
+
+    function syncAttachments(current, previous, useKeepalive) {
+      var currentById = {};
+      var previousById = {};
+      (Array.isArray(current) ? current : []).forEach(function (item) {
+        if (item && item.id && item.filename) {
+          currentById[item.id] = { id: item.id, filename: item.filename };
+        }
+      });
+      (Array.isArray(previous) ? previous : []).forEach(function (item) {
+        if (item && item.id && item.filename) {
+          previousById[item.id] = { id: item.id, filename: item.filename };
+        }
+      });
+      syncRecordMap("/expenseflow/drafts/attachments", currentById, previousById, useKeepalive);
+    }
+
+    function syncReports(current, previous, useKeepalive) {
+      var currentByNumber = {};
+      var previousByNumber = {};
+      normalizeSubmittedReports(current).forEach(function (report) {
+        currentByNumber[report.reportNumber] = report;
+      });
+      normalizeSubmittedReports(previous).forEach(function (report) {
+        previousByNumber[report.reportNumber] = report;
+      });
+      Object.keys(currentByNumber).forEach(function (reportNumber) {
+        if (!valuesDiffer(currentByNumber[reportNumber], previousByNumber[reportNumber])) return;
+        var report = Object.assign({}, currentByNumber[reportNumber]);
+        report.attachments = (Array.isArray(report.attachments) ? report.attachments : [])
+          .filter(function (item) { return item && item.id && item.filename; })
+          .map(function (item) { return { id: item.id, filename: item.filename }; });
+        sendRequest("/expenseflow/reports", "POST", report, useKeepalive);
+      });
+      Object.keys(previousByNumber).forEach(function (reportNumber) {
+        if (currentByNumber[reportNumber]) return;
+        sendRequest(
+          "/expenseflow/reports/" + encodeURIComponent(reportNumber),
+          "DELETE",
+          undefined,
+          useKeepalive
+        );
+      });
+    }
+
+    function syncPreferences(snapshot, previous, useKeepalive) {
+      var preferenceKeys = [
+        "expenseTargetLine",
+        "perDiemTargetLine",
+        "cashExpensesDirty",
+        "cashExpensesActiveTab",
+        "expenseHeaderDirty",
+        "reviewApproversDirty",
+        "submittedReportSequence"
+      ];
+      preferenceKeys.forEach(function (key) {
+        if (!valuesDiffer(snapshot[key], previous[key])) return;
+        if (snapshot[key] === undefined) {
+          sendRequest(
+            "/expenseflow/drafts/preferences/" + encodeURIComponent(key),
+            "DELETE",
+            undefined,
+            useKeepalive
+          );
+        } else {
+          var body = {};
+          body[key] = snapshot[key];
+          sendRequest("/expenseflow/drafts/preferences", "PATCH", body, useKeepalive);
+        }
+      });
     }
 
     function syncNow(useKeepalive) {
@@ -998,25 +1100,20 @@
       if (!lastSnapshot && !Object.keys(snapshot).length) {
         return;
       }
-      var patch = buildPatch(snapshot);
-      var payload = {
-        data: patch,
-        note: "Auto sync ExpenseFlow local state."
-      };
-      var payloadKey = JSON.stringify(payload.data);
-      if (payloadKey === lastPayload) {
-        lastSnapshot = snapshot;
-        return;
-      }
+      var previous = lastSnapshot || {};
+      syncSingle("/expenseflow/drafts/headers/saved", snapshot.expenseHeader, previous.expenseHeader, useKeepalive);
+      syncSingle("/expenseflow/drafts/headers/draft", snapshot.expenseHeaderDraft, previous.expenseHeaderDraft, useKeepalive);
+      syncRecordMap("/expenseflow/drafts/expense-lines/saved", snapshot.expenseLines, previous.expenseLines, useKeepalive);
+      syncRecordMap("/expenseflow/drafts/expense-lines/draft", snapshot.expenseLinesDraft, previous.expenseLinesDraft, useKeepalive);
+      syncRecordMap("/expenseflow/drafts/per-diem-lines/saved", snapshot.perDiemLines, previous.perDiemLines, useKeepalive);
+      syncRecordMap("/expenseflow/drafts/per-diem-lines/draft", snapshot.perDiemLinesDraft, previous.perDiemLinesDraft, useKeepalive);
+      syncRecordMap("/expenseflow/drafts/allocations", snapshot.expenseAllocations, previous.expenseAllocations, useKeepalive);
+      syncIndexedList("/expenseflow/drafts/approvers/saved", snapshot.reviewApprovers, previous.reviewApprovers, useKeepalive);
+      syncIndexedList("/expenseflow/drafts/approvers/draft", snapshot.reviewApproversDraft, previous.reviewApproversDraft, useKeepalive);
+      syncAttachments(snapshot.expenseAttachmentsDraft, previous.expenseAttachmentsDraft, useKeepalive);
+      syncReports(snapshot.submittedExpenseReports, previous.submittedExpenseReports, useKeepalive);
+      syncPreferences(snapshot, previous, useKeepalive);
       lastSnapshot = snapshot;
-      lastPayload = payloadKey;
-      fetch(resolveApiEndpoint("/state"), {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        keepalive: Boolean(useKeepalive)
-      }).catch(function () {});
     }
 
     function scheduleSync() {

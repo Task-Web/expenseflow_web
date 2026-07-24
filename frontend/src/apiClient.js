@@ -59,11 +59,6 @@ async function request(path, options = {}) {
 
 export const api = {
   baseUrl: API_BASE,
-  getState: () => request("/state"),
-  replaceState: (data, note, meta) =>
-    request("/state", { method: "PUT", body: JSON.stringify({ data, note, meta }) }),
-  patchState: (data, note) => request("/state", { method: "PATCH", body: JSON.stringify({ data, note }) }),
-  resetState: () => request("/state", { method: "DELETE" }),
   getInfo: () => request("/info"),
   listFiles: () => request("/files"),
   uploadFiles: (files = []) => {

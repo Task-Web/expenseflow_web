@@ -1,10 +1,11 @@
 import mimetypes
 import os
 import platform
+import re
 import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, Response, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +14,21 @@ from mcp.server.fastmcp import FastMCP
 
 from .config import Settings, get_settings
 from .file_store import FileStore
-from .schemas import FileMetadata, InfoResponse, StatePatchRequest, StateRequest, StateResponse
+from .schemas import (
+    ExpenseAllocationRequest,
+    ExpenseApproverRequest,
+    ExpenseAttachmentRequest,
+    ExpenseHeaderRequest,
+    ExpenseLineRequest,
+    ExpensePreferencesRequest,
+    FileMetadata,
+    InfoResponse,
+    PerDiemLineRequest,
+    StatePatchRequest,
+    StateRequest,
+    StateResponse,
+    SubmittedExpenseReportRequest,
+)
 from .state_store import StateStore
 
 settings = get_settings()
@@ -21,7 +36,6 @@ store = StateStore()
 file_store = FileStore("files", settings.api_prefix)
 
 tags_metadata = [
-    {"name": "state", "description": "Manage per-user experiment state"},
     {"name": "files", "description": "Upload and fetch files scoped to a user cookie"},
     {"name": "system", "description": "Environment and health information"},
 ]
@@ -112,15 +126,13 @@ async def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/state-doc", tags=["system"])
-async def state_doc():
-    from pathlib import Path
-    content = Path("/app/STATE.md").read_text(encoding="utf-8")
-    return Response(content=content, media_type="text/plain; charset=utf-8")
-
-
 # when build on the basesite, the below endpoints about state management should remain unchanged
-@app.get(f"{settings.api_prefix}/state", response_model=StateResponse, tags=["state"])
+@app.get(
+    f"{settings.api_prefix}/state",
+    response_model=StateResponse,
+    tags=["state"],
+    include_in_schema=False,
+)
 async def get_state(user_id: str = Depends(get_user_id)) -> StateResponse:
     state = await store.get_state(user_id)
     return StateResponse(user_id=user_id, state=state)
@@ -131,6 +143,7 @@ async def get_state(user_id: str = Depends(get_user_id)) -> StateResponse:
     response_model=StateResponse,
     tags=["state"],
     summary="Replace state",
+    include_in_schema=False,
 )
 async def put_state(payload: StateRequest, user_id: str = Depends(get_user_id)) -> StateResponse:
     next_state = {"data": payload.data, "note": payload.note}
@@ -145,6 +158,7 @@ async def put_state(payload: StateRequest, user_id: str = Depends(get_user_id)) 
     response_model=StateResponse,
     tags=["state"],
     summary="Merge into existing state",
+    include_in_schema=False,
 )
 async def patch_state(
     payload: StatePatchRequest, user_id: str = Depends(get_user_id)
@@ -158,11 +172,389 @@ async def patch_state(
     response_model=StateResponse,
     tags=["state"],
     summary="Reset and clear state",
+    include_in_schema=False,
 )
 async def delete_state(user_id: str = Depends(get_user_id)) -> StateResponse:
     file_store.delete_user_files(user_id)
     state = await store.reset_state(user_id)
     return StateResponse(user_id=user_id, state=state)
+
+
+@app.get(f"{settings.api_prefix}/expenseflow/workspace", tags=["expenseflow"])
+async def get_expenseflow_workspace(user_id: str = Depends(get_user_id)) -> Dict[str, Any]:
+    state = await store.get_state(user_id)
+    workspace = state.data.get("expenseflow", {})
+    return {
+        "user_id": user_id,
+        "local_storage": workspace.get("local_storage", {}),
+        "submitted_expense_reports": workspace.get("submitted_expense_reports", []),
+    }
+
+
+def _expenseflow_workspace(data: Dict[str, Any]) -> Dict[str, Any]:
+    workspace = data.setdefault("expenseflow", {})
+    workspace.setdefault("local_storage", {})
+    workspace.setdefault("submitted_expense_reports", [])
+    return workspace
+
+
+def _validate_line_number(line_number: int) -> None:
+    if line_number < 1 or line_number > 10:
+        raise HTTPException(status_code=422, detail="Line number must be between 1 and 10")
+
+
+HEADER_KEYS = {"saved": "expenseHeader", "draft": "expenseHeaderDraft"}
+LINE_KEYS = {"saved": "expenseLines", "draft": "expenseLinesDraft"}
+PER_DIEM_KEYS = {"saved": "perDiemLines", "draft": "perDiemLinesDraft"}
+APPROVER_KEYS = {"saved": "reviewApprovers", "draft": "reviewApproversDraft"}
+PREFERENCE_KEYS = {
+    "expenseTargetLine",
+    "perDiemTargetLine",
+    "cashExpensesDirty",
+    "cashExpensesActiveTab",
+    "expenseHeaderDirty",
+    "reviewApproversDirty",
+    "submittedReportSequence",
+}
+
+
+def _expense_attachment_metadata(user_id: str, attachment) -> Dict[str, Any]:
+    match = next(
+        (
+            item
+            for item in file_store.list_files(user_id)
+            if item.id == attachment.id and item.filename == attachment.filename
+        ),
+        None,
+    )
+    if match is None:
+        raise HTTPException(status_code=404, detail="Uploaded attachment not found")
+    return match.model_dump()
+
+
+def _expense_amount(value: Any) -> float:
+    cleaned = re.sub(r"[^0-9.]", "", str(value or ""))
+    try:
+        return float(cleaned) if cleaned else 0.0
+    except ValueError:
+        return 0.0
+
+
+def _validate_report_snapshot(payload: SubmittedExpenseReportRequest) -> None:
+    header = payload.header
+    expected_header_fields = {
+        "costCenter": header.costCenter,
+        "employeeName": header.employeeName,
+        "purpose": header.expenseDescription,
+        "template": header.template,
+        "templateDesc": header.templateDesc,
+        "budgetAmount": header.budgetAmount,
+    }
+    for field, expected in expected_header_fields.items():
+        if getattr(payload, field) != expected:
+            raise HTTPException(status_code=422, detail=f"Report {field} does not match header")
+    for collection in (payload.lines, payload.perDiemLines, payload.allocations):
+        if any(not key.isdigit() or not 1 <= int(key) <= 10 for key in collection):
+            raise HTTPException(status_code=422, detail="Report contains an invalid line number")
+    total = sum(
+        _expense_amount(line.reimbAmount or line.receiptAmount)
+        for line in payload.lines.values()
+    ) + sum(_expense_amount(line.reimbAmount) for line in payload.perDiemLines.values())
+    if abs(payload.reportTotal - total) > 0.01:
+        raise HTTPException(status_code=422, detail="Report total does not match expense lines")
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/headers/{{version}}", tags=["expenseflow"])
+async def save_expense_header(
+    version: Literal["saved", "draft"],
+    payload: ExpenseHeaderRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    header = payload.model_dump()
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        _expenseflow_workspace(data)["local_storage"][HEADER_KEYS[version]] = header
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "header": header, "version": version}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/headers/{{version}}", tags=["expenseflow"])
+async def delete_expense_header(
+    version: Literal["saved", "draft"], user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        _expenseflow_workspace(data)["local_storage"].pop(HEADER_KEYS[version], None)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+def _line_endpoint(kind: str, version: str, line_number: int, value: Dict[str, Any]):
+    _validate_line_number(line_number)
+    key_map = LINE_KEYS if kind == "expense-lines" else PER_DIEM_KEYS
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        local = _expenseflow_workspace(data)["local_storage"]
+        lines = local.setdefault(key_map[version], {})
+        lines[str(line_number)] = value
+        return data
+
+    return mutate
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/expense-lines/{{version}}/{{line_number}}", tags=["expenseflow"])
+async def save_expense_line(
+    version: Literal["saved", "draft"],
+    line_number: int,
+    payload: ExpenseLineRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    value = payload.model_dump()
+    await store.mutate_data(user_id, _line_endpoint("expense-lines", version, line_number, value))
+    return {"user_id": user_id, "line_number": line_number, "line": value}
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/per-diem-lines/{{version}}/{{line_number}}", tags=["expenseflow"])
+async def save_per_diem_line(
+    version: Literal["saved", "draft"],
+    line_number: int,
+    payload: PerDiemLineRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    value = payload.model_dump()
+    await store.mutate_data(user_id, _line_endpoint("per-diem-lines", version, line_number, value))
+    return {"user_id": user_id, "line_number": line_number, "line": value}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/{{kind}}/{{version}}/{{line_number}}", tags=["expenseflow"])
+async def delete_expense_line(
+    kind: Literal["expense-lines", "per-diem-lines"],
+    version: Literal["saved", "draft"],
+    line_number: int,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    _validate_line_number(line_number)
+    key_map = LINE_KEYS if kind == "expense-lines" else PER_DIEM_KEYS
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        lines = _expenseflow_workspace(data)["local_storage"].setdefault(key_map[version], {})
+        lines.pop(str(line_number), None)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/allocations/{{line_number}}", tags=["expenseflow"])
+async def save_expense_allocation(
+    line_number: int,
+    payload: ExpenseAllocationRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    _validate_line_number(line_number)
+    value = payload.model_dump()
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        allocations = _expenseflow_workspace(data)["local_storage"].setdefault(
+            "expenseAllocations", {}
+        )
+        allocations[str(line_number)] = value
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "line_number": line_number, "allocation": value}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/allocations/{{line_number}}", tags=["expenseflow"])
+async def delete_expense_allocation(
+    line_number: int, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    _validate_line_number(line_number)
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        local = _expenseflow_workspace(data)["local_storage"]
+        local.setdefault("expenseAllocations", {}).pop(str(line_number), None)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/approvers/{{version}}/{{position}}", tags=["expenseflow"])
+async def save_expense_approver(
+    version: Literal["saved", "draft"],
+    position: int,
+    payload: ExpenseApproverRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    if position < 0 or position > 20:
+        raise HTTPException(status_code=422, detail="Invalid approver position")
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        local = _expenseflow_workspace(data)["local_storage"]
+        approvers = local.setdefault(APPROVER_KEYS[version], [])
+        while len(approvers) <= position:
+            approvers.append("")
+        approvers[position] = payload.name
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "position": position, "name": payload.name}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/approvers/{{version}}/{{position}}", tags=["expenseflow"])
+async def delete_expense_approver(
+    version: Literal["saved", "draft"],
+    position: int,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    if position < 0 or position > 20:
+        raise HTTPException(status_code=422, detail="Invalid approver position")
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        approvers = _expenseflow_workspace(data)["local_storage"].setdefault(
+            APPROVER_KEYS[version], []
+        )
+        if position < len(approvers):
+            approvers[position] = ""
+            while approvers and approvers[-1] == "":
+                approvers.pop()
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+@app.put(f"{settings.api_prefix}/expenseflow/drafts/attachments/{{attachment_id}}", tags=["expenseflow"])
+async def save_expense_attachment(
+    attachment_id: str,
+    payload: ExpenseAttachmentRequest,
+    user_id: str = Depends(get_user_id),
+) -> Dict[str, Any]:
+    if payload.id != attachment_id:
+        raise HTTPException(status_code=422, detail="Attachment id cannot be changed")
+    value = _expense_attachment_metadata(user_id, payload)
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        local = _expenseflow_workspace(data)["local_storage"]
+        attachments = local.setdefault("expenseAttachmentsDraft", [])
+        attachments[:] = [item for item in attachments if item.get("id") != attachment_id]
+        attachments.append(value)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "attachment": value}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/attachments/{{attachment_id}}", tags=["expenseflow"])
+async def delete_expense_attachment(
+    attachment_id: str, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        local = _expenseflow_workspace(data)["local_storage"]
+        attachments = local.setdefault("expenseAttachmentsDraft", [])
+        attachments[:] = [item for item in attachments if item.get("id") != attachment_id]
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+@app.patch(f"{settings.api_prefix}/expenseflow/drafts/preferences", tags=["expenseflow"])
+async def update_expense_preferences(
+    payload: ExpensePreferencesRequest, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    values = payload.model_dump(exclude_none=True)
+    if not values:
+        raise HTTPException(status_code=422, detail="At least one preference is required")
+    values = {
+        key: value.model_dump() if hasattr(value, "model_dump") else value
+        for key, value in values.items()
+    }
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        _expenseflow_workspace(data)["local_storage"].update(values)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "preferences": values}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/drafts/preferences/{{preference}}", tags=["expenseflow"])
+async def delete_expense_preference(
+    preference: str, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    if preference not in PREFERENCE_KEYS:
+        raise HTTPException(status_code=404, detail="Preference not found")
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        _expenseflow_workspace(data)["local_storage"].pop(preference, None)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "deleted": True}
+
+
+@app.post(f"{settings.api_prefix}/expenseflow/reports", tags=["expenseflow"])
+async def submit_expense_report(
+    payload: SubmittedExpenseReportRequest, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    _validate_report_snapshot(payload)
+    report = payload.model_dump()
+    report["attachments"] = [
+        _expense_attachment_metadata(user_id, attachment)
+        for attachment in payload.attachments
+    ]
+
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        workspace = _expenseflow_workspace(data)
+        reports = workspace["submitted_expense_reports"]
+        existing = next(
+            (item for item in reports if item.get("reportNumber") == payload.reportNumber),
+            None,
+        )
+        if existing is not None and existing != report:
+            raise HTTPException(status_code=409, detail="Report already exists")
+        if existing is None:
+            reports.insert(0, report)
+        local_reports = workspace["local_storage"].setdefault("submittedExpenseReports", [])
+        local_existing = next(
+            (item for item in local_reports if item.get("reportNumber") == payload.reportNumber),
+            None,
+        )
+        if local_existing is None:
+            local_reports.insert(0, report)
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "report": report}
+
+
+@app.delete(f"{settings.api_prefix}/expenseflow/reports/{{report_number}}", tags=["expenseflow"])
+async def withdraw_expense_report(
+    report_number: str, user_id: str = Depends(get_user_id)
+) -> Dict[str, Any]:
+    def mutate(data: Dict[str, Any]) -> Dict[str, Any]:
+        workspace = _expenseflow_workspace(data)
+        reports = workspace["submitted_expense_reports"]
+        if not any(item.get("reportNumber") == report_number for item in reports):
+            raise HTTPException(status_code=404, detail="Report not found")
+        workspace["submitted_expense_reports"] = [
+            item for item in reports if item.get("reportNumber") != report_number
+        ]
+        local = workspace["local_storage"]
+        local["submittedExpenseReports"] = [
+            item
+            for item in local.get("submittedExpenseReports", [])
+            if item.get("reportNumber") != report_number
+        ]
+        return data
+
+    await store.mutate_data(user_id, mutate)
+    return {"user_id": user_id, "withdrawn": report_number}
 
 
 @app.post(

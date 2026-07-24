@@ -62,12 +62,6 @@ function App() {
         >
           Open ExpenseFlow
         </a>
-        <a
-          className="rounded-full border border-slate-300 px-4 py-2 text-slate-700"
-          href="/state-manage"
-        >
-          State console
-        </a>
       </div>
     </div>
   );
