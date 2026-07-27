@@ -52,13 +52,51 @@ def report_payload(file_data, *, total=12.5, line_key="1"):
 
 
 @pytest.mark.asyncio
+async def test_workspace_is_product_projection(async_client):
+    cookie = "expenseflow-workspace"
+    await async_client.delete("/api/state", params={"cookie": cookie})
+    await async_client.patch(
+        "/api/state",
+        params={"cookie": cookie},
+        json={
+            "data": {
+                "evaluator_marker": {"keep": True},
+                "unrelated_top_level": {"hidden": True},
+            }
+        },
+    )
+
+    response = await async_client.get(
+        "/api/expenseflow/workspace", params={"cookie": cookie}
+    )
+
+    assert response.status_code == 200
+    assert set(response.json()) == {
+        "user_id",
+        "local_storage",
+        "submitted_expense_reports",
+    }
+    assert "evaluator_marker" not in response.json()
+    assert "unrelated_top_level" not in response.json()
+    final = await async_client.get("/api/state", params={"cookie": cookie})
+    assert final.json()["state"]["data"]["evaluator_marker"] == {"keep": True}
+    assert final.json()["state"]["data"]["unrelated_top_level"] == {"hidden": True}
+    await async_client.delete("/api/state", params={"cookie": cookie})
+
+
+@pytest.mark.asyncio
 async def test_expense_report_is_domain_validated_and_preserves_evaluator_state(async_client):
     cookie = "expenseflow-product"
     await async_client.delete("/api/state", params={"cookie": cookie})
     await async_client.patch(
         "/api/state",
         params={"cookie": cookie},
-        json={"data": {"evaluator_marker": {"keep": True}}},
+        json={
+            "data": {
+                "evaluator_marker": {"keep": True},
+                "unrelated_top_level": {"hidden": True},
+            }
+        },
     )
     upload = await async_client.post(
         "/api/files",
@@ -90,6 +128,7 @@ async def test_expense_report_is_domain_validated_and_preserves_evaluator_state(
         "submittedExpenseReports"
     ][0]
     assert final.json()["state"]["data"]["evaluator_marker"] == {"keep": True}
+    assert final.json()["state"]["data"]["unrelated_top_level"] == {"hidden": True}
     await async_client.delete("/api/state", params={"cookie": cookie})
 
 
@@ -103,6 +142,22 @@ async def test_expense_report_rejects_forged_totals_lines_and_attachment_fields(
         files={"files": ("receipt.doc", b"receipt", "application/msword")},
     )
     file_data = upload.json()[0]
+
+    for field in (
+        "arbitrary_state",
+        "developer_tools_open",
+        "evaluator_marker",
+        "data",
+        "state",
+    ):
+        rejected = report_payload(file_data)
+        rejected[field] = True
+        response = await async_client.post(
+            "/api/expenseflow/reports",
+            params={"cookie": cookie},
+            json=rejected,
+        )
+        assert response.status_code == 422
 
     forged_total = await async_client.post(
         "/api/expenseflow/reports",
