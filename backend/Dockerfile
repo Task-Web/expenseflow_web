@@ -6,9 +6,12 @@ WORKDIR /app
 
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
+    FILE_STORAGE_DIR=/data/files \
     UV_DEFAULT_INDEX=https://pypi.org/simple \
     UV_NO_CACHE=1 \
     UV_PYTHON_DOWNLOADS=never
+
+RUN install -d -m 0777 /data/files
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project

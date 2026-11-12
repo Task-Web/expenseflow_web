@@ -64,6 +64,7 @@ Open http://localhost (nginx reverse proxy). It routes `/api` and `/mcp` to the 
 - `COOKIE_NAME` (default `user_id`)
 - `COOKIE_MAX_AGE` (seconds, default 30d)
 - `CORS_ORIGINS` (JSON list, default `["http://localhost:5173"]`)
+- `FILE_STORAGE_DIR` (default `files`; Docker images use `/data/files` on a writable volume)
 - `DEBUG` (boolean)
 
 Set them in `backend/.env` (see `backend/.env.example`).

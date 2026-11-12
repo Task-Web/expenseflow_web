@@ -33,7 +33,7 @@ from .state_store import StateStore
 
 settings = get_settings()
 store = StateStore()
-file_store = FileStore("files", settings.api_prefix)
+file_store = FileStore(settings.file_storage_dir, settings.api_prefix)
 
 tags_metadata = [
     {"name": "files", "description": "Upload and fetch files scoped to a user cookie"},

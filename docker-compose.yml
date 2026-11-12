@@ -5,10 +5,12 @@ services:
     environment:
       - API_PREFIX=/api
       - ENV=production
+      - FILE_STORAGE_DIR=/data/files
     expose:
       - "8000"
     volumes:
       - ./STATE.md:/app/STATE.md:ro
+      - expenseflow_files:/data/files
 
   frontend:
     build:
@@ -27,3 +29,6 @@ services:
       - "8001:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  expenseflow_files:

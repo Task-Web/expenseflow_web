@@ -2,9 +2,8 @@ import os
 from functools import lru_cache
 from typing import List
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
@@ -17,6 +16,7 @@ class Settings(BaseSettings):
     cookie_name: str = "user_id"
     cookie_max_age: int = 60 * 60 * 24 * 30  # 30 days
     cors_origins: List[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+    file_storage_dir: str = "files"
     debug: bool = False
 
 
